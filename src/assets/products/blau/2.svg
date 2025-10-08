@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#0a1324" />
+  <path d="M160 120c0-44 36-80 80-80h160c44 0 80 36 80 80v420c0 66-54 120-120 120H280c-66 0-120-54-120-120V120z" fill="#1f4ba0" />
+  <path d="M200 240h240v190c0 61-49 110-110 110h-20c-61 0-110-49-110-110V240z" fill="#9eb8ff" fill-opacity="0.18" />
+  <circle cx="320" cy="210" r="70" fill="#9bc4ff" fill-opacity="0.2" />
+  <text x="320" y="760" text-anchor="middle" fill="#dde6ff" font-family="'Segoe UI', sans-serif" font-size="48">Blau · Bild 2</text>
+</svg>

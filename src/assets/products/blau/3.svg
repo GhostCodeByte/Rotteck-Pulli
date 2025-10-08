@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#0b1020" />
+  <g transform="translate(80 100)">
+    <path d="M120 0h240c66 0 120 54 120 120v240c0 110-90 200-200 200h-80C90 560 0 470 0 360V120C0 54 54 0 120 0z" fill="#2a5fff" />
+    <path d="M120 120h240v200c0 61-49 110-110 110h-20c-61 0-110-49-110-110V120z" fill="#ffffff" fill-opacity="0.1" />
+    <path d="M200 60h80l30 60h-140l30-60z" fill="#dfe7ff" fill-opacity="0.3" />
+  </g>
+  <text x="320" y="760" text-anchor="middle" fill="#e6ecff" font-family="'Segoe UI', sans-serif" font-size="48">Blau · Bild 3</text>
+</svg>

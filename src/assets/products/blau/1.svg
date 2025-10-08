@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800">
+  <defs>
+    <linearGradient id="grad-blau-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4b8dff" />
+      <stop offset="100%" stop-color="#001f5f" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="800" fill="#0c111c" />
+  <g transform="translate(120 80)">
+    <rect x="0" y="0" width="400" height="600" rx="80" fill="url(#grad-blau-1)" />
+    <path d="M80 140h240a30 30 0 0 1 30 30v220c0 88-72 160-160 160s-160-72-160-160V170a30 30 0 0 1 30-30z" fill="#dce9ff" fill-opacity="0.08" />
+  </g>
+  <text x="320" y="760" text-anchor="middle" fill="#f3f6ff" font-family="'Segoe UI', sans-serif" font-size="48">Blau · Bild 1</text>
+</svg>
