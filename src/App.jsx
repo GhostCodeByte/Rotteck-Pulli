@@ -43,7 +43,7 @@ const VARIANT_IMAGES = (() => {
   return result;
 })();
 
-const PRICE_IN_EURO = 109.0;
+const PRICE_IN_EURO = 35.0;
 
 /* Top bar + responsive carousel with swipe, buttons, and animations
    Theme: gray background, white text, accent rgb(204, 31, 47)
@@ -136,8 +136,11 @@ function Carousel() {
   }, []);
 
   useEffect(() => {
+    const missing = images.filter((src) => !orientations[src]);
+    if (missing.length === 0) return;
+
     let cancelled = false;
-    const loaders = images.map((src) => {
+    const loaders = missing.map((src) => {
       const img = new Image();
       const assign = () => {
         if (cancelled) return;
@@ -154,11 +157,12 @@ function Carousel() {
       else img.addEventListener("load", assign, { once: true });
       return () => img.removeEventListener("load", assign);
     });
+
     return () => {
       cancelled = true;
       loaders.forEach((cleanup) => cleanup?.());
     };
-  }, [images]);
+  }, [images, orientations]);
 
   const margin = containerWidth ? Math.max(16, containerWidth * 0.03) : 20;
   const preferredWidth = containerWidth ? containerWidth * 0.64 : 340;
@@ -263,15 +267,13 @@ function Carousel() {
                     if (info.offset.x > 80) prev();
                   }}
                   onClick={() => {
-                    if (offset === -1) prev();
-                    if (offset === 1) next();
+                    if (!isActive) goTo(index);
                   }}
                   onKeyDown={(event) => {
                     if (isActive) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      if (offset === -1) prev();
-                      if (offset === 1) next();
+                      goTo(index);
                     }
                   }}
                   style={{ width: figureWidth, height: imageHeight }}
@@ -363,9 +365,10 @@ function Carousel() {
               type="button"
               onClick={() => handleColorChange(variant.key)}
               className={cn(
-                "group flex min-w-[9.5rem] items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:border-white/30 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40",
-                isSelected && "border-[rgb(204,31,47)] bg-white/15",
-                !isSelected && "hover:border-[rgb(204,31,47)]/70",
+                "group flex min-w-[9.5rem] items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40",
+                isSelected
+                  ? "border-[rgb(204,31,47)] bg-white/15 shadow-[0_0_0_1px_rgba(204,31,47,0.35)]"
+                  : "hover:border-[rgb(204,31,47)]/70"
               )}
             >
               <span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-gray-800/80">
