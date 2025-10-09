@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useRef, useState, useId } from "react";
-import { motion } from "framer-motion";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useId,
+  useCallback,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import {
   COLOR_VARIANTS,
@@ -26,20 +33,35 @@ export default function ProductShowcase({
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [orientations, setOrientations] = useState({});
-  const swipeStateRef = useRef({ pointerId: null, startX: 0, active: false });
+  const swipeStateRef = useRef({
+    id: null,
+    startX: 0,
+    lastX: 0,
+    active: false,
+  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const total = images.length;
-  const goTo = (target) => {
-    if (!total) return;
-    const normalized = ((target % total) + total) % total;
-    setCurrent(normalized);
-  };
+  const goTo = useCallback(
+    (target) => {
+      if (!total) return;
+      const normalized = ((target % total) + total) % total;
+      setCurrent(normalized);
+    },
+    [total]
+  );
 
-  const next = () => goTo(current + 1);
-  const prev = () => goTo(current - 1);
+  const next = useCallback(() => {
+    goTo(current + 1);
+  }, [current, goTo]);
+
+  const prev = useCallback(() => {
+    goTo(current - 1);
+  }, [current, goTo]);
 
   useEffect(() => {
     setCurrent(0);
+    setIsModalOpen(false);
   }, [activeColor]);
 
   useEffect(() => {
@@ -81,6 +103,37 @@ export default function ProductShowcase({
     };
   }, [images, orientations]);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsModalOpen(false);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goTo(current + 1);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goTo(current - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    let originalOverflow;
+    if (typeof document !== "undefined") {
+      originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (typeof document !== "undefined") {
+        document.body.style.overflow = originalOverflow ?? "";
+      }
+    };
+  }, [isModalOpen, current, goTo]);
+
   const margin = containerWidth ? Math.max(16, containerWidth * 0.03) : 20;
   const preferredWidth = containerWidth ? containerWidth * 0.64 : 340;
   const maxWidth = containerWidth
@@ -119,73 +172,130 @@ export default function ProductShowcase({
   );
 
   const resetSwipeState = () => {
-    swipeStateRef.current = { pointerId: null, startX: 0, active: false };
+    swipeStateRef.current = { id: null, startX: 0, lastX: 0, active: false };
   };
 
-  const handlePointerEnd = (event) => {
-    const state = swipeStateRef.current;
-    if (!state.active || state.pointerId !== event.pointerId) {
-      return;
-    }
+  const startSwipe = (id, clientX) => {
+    if (swipeStateRef.current.active) return;
+    const safeX =
+      typeof clientX === "number" && !Number.isNaN(clientX) ? clientX : 0;
+    swipeStateRef.current = {
+      id,
+      startX: safeX,
+      lastX: safeX,
+      active: true,
+    };
+  };
 
-    const endX =
-      typeof event.clientX === "number" && !Number.isNaN(event.clientX)
-        ? event.clientX
+  const updateSwipePosition = (id, clientX) => {
+    const state = swipeStateRef.current;
+    if (!state.active || state.id !== id) return;
+    const safeX =
+      typeof clientX === "number" && !Number.isNaN(clientX)
+        ? clientX
+        : state.lastX;
+    swipeStateRef.current = { ...state, lastX: safeX };
+  };
+
+  const finishSwipe = (id, clientX) => {
+    const state = swipeStateRef.current;
+    if (!state.active || state.id !== id) return;
+    const finalX =
+      typeof clientX === "number" && !Number.isNaN(clientX)
+        ? clientX
         : state.lastX ?? state.startX;
-    const deltaX = endX - state.startX;
+    const deltaX = finalX - state.startX;
     if (Math.abs(deltaX) > swipeThreshold) {
       if (deltaX < 0) next();
       else prev();
     }
+    resetSwipeState();
+  };
 
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  const cancelSwipe = (id) => {
+    if (swipeStateRef.current.id !== id) return;
     resetSwipeState();
   };
 
   const handlePointerDown = (event) => {
-    if (swipeStateRef.current.active) {
-      return;
-    }
-
-    swipeStateRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      active: true,
-    };
-
+    startSwipe(event.pointerId, event.clientX);
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
   const handlePointerMove = (event) => {
-    const state = swipeStateRef.current;
-    if (!state.active || state.pointerId !== event.pointerId) {
-      return;
-    }
-    const currentX =
-      typeof event.clientX === "number" && !Number.isNaN(event.clientX)
-        ? event.clientX
-        : state.lastX ?? state.startX;
-    swipeStateRef.current = { ...state, lastX: currentX };
+    updateSwipePosition(event.pointerId, event.clientX);
+  };
+
+  const handlePointerUp = (event) => {
+    finishSwipe(event.pointerId, event.clientX);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
   const handlePointerCancel = (event) => {
-    const state = swipeStateRef.current;
-    if (state.pointerId === event.pointerId) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-      resetSwipeState();
-    }
+    cancelSwipe(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
+
+  const handlePointerLeave = (event) => {
+    cancelSwipe(event.pointerId);
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  };
+
+  const handleTouchStart = (event) => {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    startSwipe(touch.identifier, touch.clientX);
+  };
+
+  const handleTouchMove = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    const touch = Array.from(event.touches || []).find(
+      (entry) => entry.identifier === state.id
+    );
+    if (!touch) return;
+    updateSwipePosition(touch.identifier, touch.clientX);
+  };
+
+  const handleTouchEnd = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    const touch = Array.from(event.changedTouches || []).find(
+      (entry) => entry.identifier === state.id
+    );
+    if (!touch) return;
+    finishSwipe(touch.identifier, touch.clientX);
+  };
+
+  const handleTouchCancel = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    const touch = Array.from(event.changedTouches || []).find(
+      (entry) => entry.identifier === state.id
+    );
+    if (!touch) return;
+    cancelSwipe(touch.identifier);
+  };
+
+  const currentImageSrc = total > 0 ? images[current] : null;
+  const currentImageMeta = currentImageSrc
+    ? orientations[currentImageSrc]
+    : null;
 
   return (
     <section className="relative mx-auto flex h-full w-full max-w-5xl flex-col justify-between gap-4">
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-[2.3rem] border border-white/5 bg-gradient-to-br from-gray-800/70 via-gray-900/80 to-gray-950 px-4 py-10 shadow-2xl shadow-black/40 backdrop-blur"
+        className="relative overflow-hidden rounded-[2.3rem] border border-white/5 bg-gradient-to-br from-gray-800/70 via-gray-900/80 to-gray-950 px-4 py-10 shadow-2xl shadow-black/40 backdrop-blur touch-pan-y"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
+        onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        onPointerLeave={handlePointerCancel}
+        onPointerLeave={handlePointerLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         <div
           className="relative mx-auto w-full max-w-4xl"
@@ -230,7 +340,7 @@ export default function ProductShowcase({
                   key={`${src}-${index}`}
                   className={cn(
                     "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 touch-pan-y",
-                    isActive ? "cursor-grab" : "cursor-pointer"
+                    isActive ? "cursor-zoom-in" : "cursor-pointer"
                   )}
                   initial={false}
                   animate={{
@@ -250,24 +360,25 @@ export default function ProductShowcase({
                     isActive ? { scale: 0.98 } : { scale: scale * 0.98 }
                   }
                   onClick={() => {
-                    if (!isActive) goTo(index);
+                    if (isActive) setIsModalOpen(true);
+                    else goTo(index);
                   }}
                   onKeyDown={(event) => {
-                    if (isActive) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      goTo(index);
+                      if (isActive) setIsModalOpen(true);
+                      else goTo(index);
                     }
                   }}
                   style={{ width: figureWidth, height: imageHeight }}
-                  role={!isActive ? "button" : undefined}
-                  tabIndex={!isActive ? 0 : -1}
+                  role="button"
+                  tabIndex={0}
                   aria-label={
-                    !isActive
-                      ? `Zum ${
+                    isActive
+                      ? "Produktbild vergrößern"
+                      : `Zum ${
                           offset === -1 ? "vorherigen" : "nächsten"
                         } Bild wechseln`
-                      : undefined
                   }
                 >
                   <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-[1.75rem] bg-gray-900 shadow-xl shadow-black/40 ring-1 ring-white/10">
@@ -464,6 +575,138 @@ export default function ProductShowcase({
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isModalOpen && currentImageSrc ? (
+          <motion.div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsModalOpen(false)}
+          >
+            <motion.div
+              className="relative flex w-full max-w-4xl flex-col items-center gap-6"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 260, damping: 28 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="absolute right-0 top-0 flex h-11 w-11 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-white/10 text-white/80 shadow-lg shadow-black/50 transition hover:bg-white/20 hover:text-white"
+                aria-label="Vollbild schließen"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m7 7 10 10" />
+                  <path d="m17 7-10 10" />
+                </svg>
+              </button>
+
+              {total > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goTo(current - 1)}
+                    className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white/80 shadow-lg shadow-black/60 transition hover:bg-white/20 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+                    aria-label="Vorheriges Bild"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M15 6l-6 6 6 6" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo(current + 1)}
+                    className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white/80 shadow-lg shadow-black/60 transition hover:bg-white/20 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+                    aria-label="Nächstes Bild"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 6l6 6-6 6" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              <motion.div
+                className="relative flex w-full items-center justify-center overflow-hidden rounded-[2rem] bg-gray-900/80 p-4 shadow-2xl shadow-black/70 ring-1 ring-white/10"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -80) goTo(current + 1);
+                  else if (info.offset.x > 80) goTo(current - 1);
+                }}
+              >
+                <img
+                  src={currentImageSrc}
+                  alt={`Produktansicht ${current + 1} im Vollbild`}
+                  className={cn(
+                    "max-h-[70vh] w-full rounded-[1.4rem] object-contain",
+                    currentImageMeta?.orientation === "portrait"
+                      ? "h-full w-auto"
+                      : "h-full"
+                  )}
+                  draggable={false}
+                />
+              </motion.div>
+
+              <div className="flex w-full items-center justify-between text-sm text-white/70">
+                <span>
+                  Bild {current + 1} von {total}
+                </span>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => goTo(current - 1)}
+                    disabled={total <= 1}
+                    className="rounded-full bg-white/10 px-4 py-2 font-semibold text-white/80 transition enabled:hover:bg-white/20 enabled:hover:text-white disabled:opacity-40"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo(current + 1)}
+                    disabled={total <= 1}
+                    className="rounded-full bg-[rgb(204,31,47)] px-4 py-2 font-semibold text-white transition enabled:hover:brightness-110 disabled:opacity-40"
+                  >
+                    Weiter
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

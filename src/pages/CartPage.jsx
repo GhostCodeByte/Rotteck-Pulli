@@ -165,30 +165,9 @@ export default function CartPage() {
                     <span className="text-white/60">Größe:</span> {item.size}
                   </p>
 
-                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-[15rem]">
-                    <div className="flex flex-col gap-1">
-                      <span>Menge</span>
-                      <select
-                        value={Math.max(1, Math.floor(item.quantity ?? 1))}
-                        onChange={(event) =>
-                          updateQuantity(item.id, Number(event.target.value))
-                        }
-                        className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                      >
-                        {quantityOptions.map((option) => (
-                          <option
-                            key={option}
-                            value={option}
-                            className="bg-gray-900 text-white"
-                          >
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
-                      <div className="flex flex-col items-start gap-1 text-left whitespace-nowrap sm:items-end sm:text-right">
+                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-[18rem]">
+                    <div className="flex flex-wrap items-stretch justify-end gap-4">
+                      <div className="flex min-w-[9rem] flex-col items-start gap-1 text-left whitespace-nowrap sm:items-end sm:text-right">
                         <span className="text-xs font-medium uppercase tracking-wide text-white/60">
                           Zwischensumme
                         </span>
@@ -198,6 +177,27 @@ export default function CartPage() {
                             currency: "EUR",
                           })}
                         </span>
+                      </div>
+
+                      <div className="flex min-w-[8.5rem] flex-1 flex-col gap-1 text-left">
+                        <span>Menge</span>
+                        <select
+                          value={Math.max(1, Math.floor(item.quantity ?? 1))}
+                          onChange={(event) =>
+                            updateQuantity(item.id, Number(event.target.value))
+                          }
+                          className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
+                        >
+                          {quantityOptions.map((option) => (
+                            <option
+                              key={option}
+                              value={option}
+                              className="bg-gray-900 text-white"
+                            >
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <button
