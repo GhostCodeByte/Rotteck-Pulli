@@ -20,6 +20,7 @@ export default function CartPage() {
     updateCustomerEmail,
     customerEmail,
     clearCart,
+    removeItem,
   } = useCart();
 
   const {
@@ -164,30 +165,30 @@ export default function CartPage() {
                     <span className="text-white/60">Größe:</span> {item.size}
                   </p>
 
-                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-52">
-                    <div className="flex flex-row items-start gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
-                      <div className="flex flex-col gap-1 flex-1 min-w-[6rem]">
-                        <span>Menge</span>
-                        <select
-                          value={Math.max(1, Math.floor(item.quantity ?? 1))}
-                          onChange={(event) =>
-                            updateQuantity(item.id, Number(event.target.value))
-                          }
-                          className="w-full sm:w-24 rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                        >
-                          {quantityOptions.map((option) => (
-                            <option
-                              key={option}
-                              value={option}
-                              className="bg-gray-900 text-white"
-                            >
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-[15rem]">
+                    <div className="flex flex-col gap-1">
+                      <span>Menge</span>
+                      <select
+                        value={Math.max(1, Math.floor(item.quantity ?? 1))}
+                        onChange={(event) =>
+                          updateQuantity(item.id, Number(event.target.value))
+                        }
+                        className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
+                      >
+                        {quantityOptions.map((option) => (
+                          <option
+                            key={option}
+                            value={option}
+                            className="bg-gray-900 text-white"
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                      <div className="flex flex-col items-end gap-1 text-right sm:min-w-[7rem]">
+                    <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
+                      <div className="flex flex-col items-start gap-1 text-left whitespace-nowrap sm:items-end sm:text-right">
                         <span className="text-xs font-medium uppercase tracking-wide text-white/60">
                           Zwischensumme
                         </span>
@@ -198,6 +199,30 @@ export default function CartPage() {
                           })}
                         </span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300/70"
+                        aria-label="Artikel entfernen"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M4.5 6.5h15" />
+                          <path d="M10 4.5h4" />
+                          <path d="M8.5 6.5v11.5a1.5 1.5 0 0 0 1.5 1.5h4a1.5 1.5 0 0 0 1.5-1.5V6.5" />
+                          <path d="M10.75 10.5v5" />
+                          <path d="M13.25 10.5v5" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </li>
