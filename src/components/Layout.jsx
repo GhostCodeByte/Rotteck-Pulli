@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useCart } from "../context/CartContext.jsx";
+import { useAdminAuth } from "../context/AdminAuthContext.jsx";
 import { ACCENT_COLOR } from "../data/productData.js";
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { count } = useCart();
+  const navigate = useNavigate();
+  const { token: adminToken, logout } = useAdminAuth();
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -39,11 +42,33 @@ export default function Layout() {
   }, [isMenuOpen]);
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  const handleNavigateHome = () => {
+    if (adminToken) {
+      logout();
+    }
+    closeMenu();
+  };
+
   const navLinks = [
-    { label: "Startseite", to: "/" },
+    {
+      label: "Startseite",
+      to: "/",
+      onClick: () => {
+        if (adminToken) {
+          logout();
+        }
+      },
+    },
     { label: "Warenkorb", to: "/cart" },
     { label: "Admin", to: "/admin" },
   ];
+
+  const handleLogout = () => {
+    logout();
+    closeMenu();
+    navigate("/");
+  };
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-900 text-white">
@@ -66,6 +91,7 @@ export default function Layout() {
             <Link
               to="/"
               className="pointer-events-auto inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-800 active:bg-gray-700"
+              onClick={handleNavigateHome}
             >
               <BrandIcon className="h-7 w-7" />
             </Link>
@@ -127,7 +153,12 @@ export default function Layout() {
                   <Link
                     key={link.to}
                     to={link.to}
-                    onClick={closeMenu}
+                    onClick={() => {
+                      if (typeof link.onClick === "function") {
+                        link.onClick();
+                      }
+                      closeMenu();
+                    }}
                     className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:border-[rgb(204,31,47)]/60 hover:bg-white/[0.08]"
                   >
                     <span>{link.label}</span>
@@ -136,6 +167,18 @@ export default function Layout() {
                     </span>
                   </Link>
                 ))}
+                {adminToken ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-2 inline-flex items-center justify-between rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-left text-sm font-semibold text-red-100 transition hover:border-red-300/60 hover:bg-red-500/20"
+                  >
+                    <span>Abmelden</span>
+                    <span aria-hidden="true" className="text-sm">
+                      ↺
+                    </span>
+                  </button>
+                ) : null}
               </nav>
             </motion.aside>
           </>
