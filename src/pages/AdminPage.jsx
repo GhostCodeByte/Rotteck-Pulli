@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "../context/AdminAuthContext.jsx";
 import { COLOR_VARIANTS, PRICE_IN_EURO } from "../data/productData.js";
 
+const PRODUCTION_PRICE_EURO = 18;
+
 function normaliseCountsRecord(record = {}) {
   return Object.entries(record)
     .map(([key, value]) => ({ key, value }))
@@ -22,7 +24,6 @@ export default function AdminPage() {
     error: "",
     success: "",
   });
-  const [productionPriceInput, setProductionPriceInput] = useState("0");
 
   const { token: adminToken, login, logout } = useAdminAuth();
   const isAuthenticated = Boolean(adminToken);
@@ -34,16 +35,6 @@ export default function AdminPage() {
     });
     return map;
   }, []);
-
-  const productionPrice = useMemo(() => {
-    const normalised = Number.parseFloat(
-      (productionPriceInput ?? "").toString().replace(",", ".")
-    );
-    if (!Number.isFinite(normalised) || normalised < 0) {
-      return 0;
-    }
-    return normalised;
-  }, [productionPriceInput]);
 
   const statusOverview = useMemo(() => {
     const counts = summary?.statusCounts ?? {};
@@ -126,7 +117,7 @@ export default function AdminPage() {
       unpaidProfit: 0,
     };
 
-    const marginPerItem = PRICE_IN_EURO - productionPrice;
+  const marginPerItem = PRICE_IN_EURO - PRODUCTION_PRICE_EURO;
 
     orders.forEach((order) => {
       const items = Array.isArray(order.items) ? order.items : [];
@@ -159,7 +150,7 @@ export default function AdminPage() {
     totals.marginPerItem = marginPerItem;
 
     return totals;
-  }, [orders, productionPrice]);
+  }, [orders]);
 
   const resetMarkOrderState = () =>
     setMarkOrderState({
@@ -342,19 +333,6 @@ export default function AdminPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                <label className="flex flex-col gap-2 text-sm text-white/80">
-                  Produktionspreis pro Pulli
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={productionPriceInput}
-                    onChange={(event) =>
-                      setProductionPriceInput(event.target.value)
-                    }
-                    className="w-48 rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-2 text-sm text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                  />
-                </label>
                 <button
                   type="button"
                   onClick={refreshSummary}
@@ -514,9 +492,10 @@ function FinancialSummary({ financials }) {
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/40">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-white">Finanzen</h2>
-        <span className="text-xs uppercase tracking-wide text-white/50">
-          Verkaufspreis: {formatCurrency(PRICE_IN_EURO)} pro Pulli
-        </span>
+        <div className="flex flex-col gap-1 text-xs uppercase tracking-wide text-white/50 sm:text-right">
+          <span>Verkaufspreis: {formatCurrency(PRICE_IN_EURO)} pro Pulli</span>
+          <span>Produktionspreis: {formatCurrency(PRODUCTION_PRICE_EURO)} pro Pulli</span>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
