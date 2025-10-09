@@ -117,7 +117,7 @@ export default function AdminPage() {
       unpaidProfit: 0,
     };
 
-  const marginPerItem = PRICE_IN_EURO - PRODUCTION_PRICE_EURO;
+    const marginPerItem = PRICE_IN_EURO - PRODUCTION_PRICE_EURO;
 
     orders.forEach((order) => {
       const items = Array.isArray(order.items) ? order.items : [];
@@ -494,7 +494,9 @@ function FinancialSummary({ financials }) {
         <h2 className="text-xl font-semibold text-white">Finanzen</h2>
         <div className="flex flex-col gap-1 text-xs uppercase tracking-wide text-white/50 sm:text-right">
           <span>Verkaufspreis: {formatCurrency(PRICE_IN_EURO)} pro Pulli</span>
-          <span>Produktionspreis: {formatCurrency(PRODUCTION_PRICE_EURO)} pro Pulli</span>
+          <span>
+            Produktionspreis: {formatCurrency(PRODUCTION_PRICE_EURO)} pro Pulli
+          </span>
         </div>
       </div>
 
