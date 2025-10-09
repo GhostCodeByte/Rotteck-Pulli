@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -38,7 +39,9 @@ function normaliseStoredItems(rawItems) {
         size,
         quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
         studentName:
-          typeof entry.studentName === "string" ? entry.studentName : "",
+          typeof entry.studentName === "string"
+            ? entry.studentName.slice(0, 140)
+            : "",
       });
     } else {
       const current = map.get(key);
@@ -53,34 +56,75 @@ function normaliseStoredItems(rawItems) {
   return Array.from(map.values());
 }
 
-function readStoredItems() {
-  if (!isBrowser) return [];
+function readStoredState() {
+  if (!isBrowser)
+    return {
+      items: [],
+      customerEmail: "",
+    };
   try {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw)
+      return {
+        items: [],
+        customerEmail: "",
+      };
     const parsed = JSON.parse(raw);
-    return normaliseStoredItems(parsed);
+    if (Array.isArray(parsed)) {
+      return {
+        items: normaliseStoredItems(parsed),
+        customerEmail: "",
+      };
+    }
+    if (parsed && typeof parsed === "object") {
+      const items = normaliseStoredItems(parsed.items ?? parsed.products ?? []);
+      const customerEmail =
+        typeof parsed.customerEmail === "string"
+          ? parsed.customerEmail.slice(0, 256)
+          : "";
+      return {
+        items,
+        customerEmail,
+      };
+    }
+    return {
+      items: [],
+      customerEmail: "",
+    };
   } catch (error) {
     console.warn("Konnte gespeicherten Warenkorb nicht lesen:", error);
-    return [];
+    return {
+      items: [],
+      customerEmail: "",
+    };
   }
 }
 
-function writeStoredItems(items) {
+function writeStoredState(items, customerEmail) {
   if (!isBrowser) return;
   try {
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    const payload = {
+      items,
+      customerEmail: typeof customerEmail === "string" ? customerEmail : "",
+      version: 2,
+      updatedAt: Date.now(),
+    };
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(payload));
   } catch (error) {
     console.warn("Konnte Warenkorb nicht speichern:", error);
   }
 }
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(() => readStoredItems());
+  const initialStateRef = useRef(readStoredState());
+  const [items, setItems] = useState(initialStateRef.current.items);
+  const [customerEmail, setCustomerEmail] = useState(
+    initialStateRef.current.customerEmail ?? ""
+  );
 
   useEffect(() => {
-    writeStoredItems(items);
-  }, [items]);
+    writeStoredState(items, customerEmail);
+  }, [items, customerEmail]);
 
   const addItem = useCallback(({ color, size }) => {
     if (!color || !size) return;
@@ -125,7 +169,8 @@ export function CartProvider({ children }) {
         item.id === id
           ? {
               ...item,
-              studentName: name,
+              studentName:
+                typeof name === "string" ? name.slice(0, 140) : "",
             }
           : item
       )
@@ -133,6 +178,15 @@ export function CartProvider({ children }) {
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
+
+  const updateCustomerEmail = useCallback((value) => {
+    setCustomerEmail((prev) => {
+      const nextValue =
+        typeof value === "function" ? value(prev) : value ?? "";
+      if (typeof nextValue !== "string") return "";
+      return nextValue.trim().slice(0, 256);
+    });
+  }, []);
 
   const count = useMemo(
     () => items.reduce((sum, item) => sum + (item.quantity ?? 0), 0),
@@ -145,10 +199,21 @@ export function CartProvider({ children }) {
       addItem,
       updateQuantity,
       updateStudentName,
+      updateCustomerEmail,
+      customerEmail,
       clearCart,
       count,
     }),
-    [items, count, addItem, updateQuantity, updateStudentName, clearCart]
+    [
+      items,
+      count,
+      addItem,
+      updateQuantity,
+      updateStudentName,
+      updateCustomerEmail,
+      customerEmail,
+      clearCart,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
