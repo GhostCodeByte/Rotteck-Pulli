@@ -6,9 +6,6 @@ const MAX_ITEMS = 50;
 const MAX_STUDENT_NAME_LENGTH = 140;
 const ORDER_TABLE = "orders";
 const PRODUCT_NAME = "Pulli";
-const DEFAULT_UNIT_PRICE_EUR = Number.parseFloat(
-  process.env.ORDER_UNIT_PRICE_EUR ?? "35"
-);
 
 let cachedClient;
 
@@ -68,11 +65,10 @@ function sanitiseItem(rawItem) {
   };
 }
 
-function hashOrder(email, items, totalAmountEuro) {
+function hashOrder(email, items) {
   const seed = JSON.stringify({
     email,
     items,
-    totalAmountEuro,
     nonce: randomBytes(16).toString("hex"),
   });
   return createHash("sha256").update(seed).digest("hex").slice(0, 12).toUpperCase();
@@ -135,12 +131,7 @@ export default async function handler(request, response) {
       .json({ error: "Die Bestellmenge muss größer als Null sein." });
   }
 
-  const unitPrice = Number.isFinite(DEFAULT_UNIT_PRICE_EUR)
-    ? DEFAULT_UNIT_PRICE_EUR
-    : 35;
-  const totalAmountEuro = unitPrice * totalQuantity;
-
-  const orderHash = hashOrder(email, sanitisedItems, totalAmountEuro);
+  const orderHash = hashOrder(email, sanitisedItems);
 
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
@@ -157,8 +148,6 @@ export default async function handler(request, response) {
         {
           email,
           items: sanitisedItems,
-          total_quantity: totalQuantity,
-          total_amount_eur: totalAmountEuro,
           order_hash: orderHash,
           status: "pending",
         },

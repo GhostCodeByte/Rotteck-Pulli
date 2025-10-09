@@ -40,7 +40,6 @@ npm run preview
 | `VITE_SUPABASE_ANON_KEY` | Client (Vite) | Public Anon Key für Lesezugriffe. |
 | `SUPABASE_URL` | Serverless Funktion | Supabase Projekt-URL (identisch zur Client-URL). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Serverless Funktion | Service Role Key für Schreibzugriffe – **nur** auf dem Server speichern! |
-| `ORDER_UNIT_PRICE_EUR` | Serverless Funktion (optional) | Bruttopreis pro Pulli in EUR. Default: `35`. |
 
 ### `.env.local` (lokal)
 
@@ -57,7 +56,6 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
 - `VITE_SUPABASE_ANON_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- Optional: `ORDER_UNIT_PRICE_EUR`
 
 > Tipp: `SUPABASE_SERVICE_ROLE_KEY` niemals im Client ausliefern. Er gehört ausschließlich in die Serverless-Funktion.
 
@@ -71,8 +69,6 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
      created_at timestamp with time zone default now(),
      email text not null,
      items jsonb not null,
-     total_quantity integer not null check (total_quantity > 0),
-     total_amount_eur numeric(12,2) not null,
      order_hash text not null unique,
      status text not null default 'pending'
    );
@@ -88,7 +84,6 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
 
 - Erwartet `POST` mit JSON `{ email: string, items: Array<{ product, color, size, quantity, studentName }> }`.
 - Validiert E-Mail-Adresse und Produkte, cappt Menge auf 30 pro Eintrag und maximal 50 Einträge.
-- Berechnet die Gesamtsumme serverseitig anhand des hinterlegten Einheitspreises.
 - Schreibt die Bestellung in Supabase und gibt `{ orderCode, createdAt }` zurück. Der `orderCode` ist ein Hash (12-stellig, Großbuchstaben), den Nutzer bei der Überweisung angeben sollen.
 - Liefert aussagekräftige Fehlermeldungen und HTTP-Statuscodes (400 für ungültige Daten, 500 bei Serverfehlern).
 
