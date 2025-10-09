@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useId } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -17,6 +17,7 @@ export default function ProductShowcase({
   selectedSize,
   onSizeChange,
 }) {
+  const colorSelectId = useId();
   const images = useMemo(
     () => [...(VARIANT_IMAGES[activeColor] ?? [])],
     [activeColor]
@@ -267,47 +268,79 @@ export default function ProductShowcase({
         })}
       </div>
 
-      <div className="flex items-center justify-center gap-2.5 overflow-hidden px-1 sm:gap-3.5">
-        {COLOR_VARIANTS.map((variant) => {
-          const isSelected = variant.key === activeColor;
-          const previewSrc = VARIANT_IMAGES[variant.key]?.[0];
-          return (
-            <button
-              key={variant.key}
-              type="button"
-              onClick={() => {
-                if (variant.key !== activeColor) {
-                  onColorChange?.(variant.key);
-                }
-              }}
-              className={cn(
-                "group flex min-w-0 flex-1 basis-[7.5rem] flex-nowrap items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:flex-none sm:basis-auto sm:min-w-[9.5rem]",
-                isSelected
-                  ? "border-[rgb(204,31,47)] bg-white/15 shadow-[0_0_0_1px_rgba(204,31,47,0.35)]"
-                  : "hover:border-[rgb(204,31,47)]/70"
-              )}
+      <div className="flex w-full flex-col gap-3 px-1 sm:flex-col sm:items-center sm:justify-center">
+        <div className="sm:hidden">
+          <label
+            htmlFor={colorSelectId}
+            className="mb-2 block text-xs uppercase tracking-widest text-white/60"
+          >
+            Farbe wählen
+          </label>
+          <div className="relative">
+            <select
+              id={colorSelectId}
+              value={activeColor}
+              onChange={(event) => onColorChange?.(event.target.value)}
+              className="w-full appearance-none rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-sm font-semibold text-white shadow-inner shadow-black/30 transition focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
             >
-              <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-800/80 sm:h-14 sm:w-14">
-                {previewSrc ? (
-                  <img
-                    src={previewSrc}
-                    alt={`${variant.label} Vorschau`}
-                    className="h-full w-full object-cover"
-                    draggable={false}
-                  />
-                ) : (
-                  <span className="h-full w-full bg-white/10" />
+              {COLOR_VARIANTS.map((variant) => (
+                <option
+                  key={variant.key}
+                  value={variant.key}
+                  className="bg-gray-900 text-white"
+                >
+                  {variant.label}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[rgb(204,31,47)]">
+              ▾
+            </span>
+          </div>
+        </div>
+
+        <div className="hidden items-center justify-center gap-2.5 overflow-hidden sm:flex sm:gap-3.5">
+          {COLOR_VARIANTS.map((variant) => {
+            const isSelected = variant.key === activeColor;
+            const previewSrc = VARIANT_IMAGES[variant.key]?.[0];
+            return (
+              <button
+                key={variant.key}
+                type="button"
+                onClick={() => {
+                  if (variant.key !== activeColor) {
+                    onColorChange?.(variant.key);
+                  }
+                }}
+                className={cn(
+                  "group flex min-w-0 flex-1 basis-[7.5rem] flex-nowrap items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:flex-none sm:basis-auto sm:min-w-[9.5rem]",
+                  isSelected
+                    ? "border-[rgb(204,31,47)] bg-white/15 shadow-[0_0_0_1px_rgba(204,31,47,0.35)]"
+                    : "hover:border-[rgb(204,31,47)]/70"
                 )}
-              </span>
-              <span
-                className="truncate text-sm font-semibold text-white"
-                title={variant.label}
               >
-                {variant.label}
-              </span>
-            </button>
-          );
-        })}
+                <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-800/80 sm:h-14 sm:w-14">
+                  {previewSrc ? (
+                    <img
+                      src={previewSrc}
+                      alt={`${variant.label} Vorschau`}
+                      className="h-full w-full object-cover"
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="h-full w-full bg-white/10" />
+                  )}
+                </span>
+                <span
+                  className="truncate text-sm font-semibold text-white"
+                  title={variant.label}
+                >
+                  {variant.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex w-full flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 sm:flex-row sm:items-center sm:justify-between sm:gap-6">

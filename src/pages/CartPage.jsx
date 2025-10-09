@@ -12,14 +12,8 @@ const PRODUCT_NAME = "Pulli";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CartPage() {
-  const {
-    items,
-    updateQuantity,
-    updateStudentName,
-    updateCustomerEmail,
-    customerEmail,
-    clearCart,
-  } = useCart();
+  const { items, updateQuantity, updateCustomerEmail, customerEmail, clearCart } =
+    useCart();
 
   const {
     submitOrder,
@@ -95,7 +89,6 @@ export default function CartPage() {
         color: item.color,
         size: item.size,
         quantity: Math.max(1, Math.floor(item.quantity ?? 1)),
-        studentName: item.studentName ?? "",
       })),
     };
 
@@ -175,27 +168,11 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <div className="flex w-full flex-col gap-4">
-                    <p className="text-base font-semibold text-white">
-                      <span className="text-white/60">Farbe:</span> {colorLabel}
-                      <span className="mx-2 text-white/40">·</span>
-                      <span className="text-white/60">Größe:</span> {item.size}
-                    </p>
-
-                    <label className="flex flex-col gap-2 text-sm text-white/70">
-                      Schüler Name
-                      <input
-                        type="text"
-                        value={item.studentName ?? ""}
-                        onChange={(event) =>
-                          updateStudentName(item.id, event.target.value)
-                        }
-                        placeholder="Schüler Name"
-                        maxLength={140}
-                        className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-2 text-sm text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                      />
-                    </label>
-                  </div>
+                  <p className="w-full text-base font-semibold text-white">
+                    <span className="text-white/60">Farbe:</span> {colorLabel}
+                    <span className="mx-2 text-white/40">·</span>
+                    <span className="text-white/60">Größe:</span> {item.size}
+                  </p>
 
                   <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-48 sm:items-end">
                     <div className="flex flex-col gap-1 sm:items-end">
@@ -221,14 +198,14 @@ export default function CartPage() {
 
                     <div className="flex flex-col items-end gap-1 text-right">
                       <span className="text-xs font-medium uppercase tracking-wide text-white/60">
-                        Preis
+                        Zwischensumme
                       </span>
-                      <div className="rounded-2xl bg-white/10 px-4 py-2 text-right text-sm font-semibold text-white">
+                      <span className="text-lg font-semibold text-white">
                         {lineTotal.toLocaleString("de-DE", {
                           style: "currency",
                           currency: "EUR",
                         })}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 </li>
@@ -285,11 +262,6 @@ export default function CartPage() {
             >
               {isSubmitting ? "Bestellung wird übertragen…" : "Kaufen"}
             </button>
-
-            <p className="text-xs text-white/50">
-              Deine Warenkorb-Daten bleiben bis zum Kauf nur lokal auf diesem
-              Gerät gespeichert.
-            </p>
           </div>
         </>
       ) : (
