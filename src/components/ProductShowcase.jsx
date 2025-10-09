@@ -299,7 +299,7 @@ export default function ProductShowcase({
           </div>
         </div>
 
-        <div className="hidden items-center justify-center gap-2.5 overflow-hidden sm:flex sm:gap-3.5">
+        <div className="hidden items-center justify-center gap-2 overflow-hidden sm:flex sm:gap-3">
           {COLOR_VARIANTS.map((variant) => {
             const isSelected = variant.key === activeColor;
             const previewSrc = VARIANT_IMAGES[variant.key]?.[0];
@@ -313,7 +313,7 @@ export default function ProductShowcase({
                   }
                 }}
                 className={cn(
-                  "group flex min-w-0 flex-1 basis-[7.5rem] flex-nowrap items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:flex-none sm:basis-auto sm:min-w-[9.5rem]",
+                  "group flex min-w-0 flex-1 basis-[6.5rem] flex-nowrap items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:flex-none sm:basis-auto sm:min-w-[8.5rem] sm:px-3 sm:py-2.5",
                   isSelected
                     ? "border-[rgb(204,31,47)] bg-white/15 shadow-[0_0_0_1px_rgba(204,31,47,0.35)]"
                     : "hover:border-[rgb(204,31,47)]/70"
