@@ -66,7 +66,7 @@ export default async function handler(request, response) {
   try {
     const { data, error } = await supabase
       .from(ORDER_TABLE)
-      .select("order_hash,status,items,created_at,email,payment_reference")
+      .select("order_hash,status,items,created_at,email")
       .order("created_at", { ascending: false });
 
     if (error) {

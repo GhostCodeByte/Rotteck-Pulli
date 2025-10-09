@@ -26,6 +26,7 @@ export default function ProductShowcase({
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [orientations, setOrientations] = useState({});
+  const swipeStateRef = useRef({ pointerId: null, startX: 0, active: false });
 
   const total = images.length;
   const goTo = (target) => {
@@ -112,11 +113,79 @@ export default function ProductShowcase({
     });
   }, [current, total]);
 
+  const swipeThreshold = Math.max(
+    48,
+    containerWidth ? containerWidth * 0.08 : 60
+  );
+
+  const resetSwipeState = () => {
+    swipeStateRef.current = { pointerId: null, startX: 0, active: false };
+  };
+
+  const handlePointerEnd = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const endX =
+      typeof event.clientX === "number" && !Number.isNaN(event.clientX)
+        ? event.clientX
+        : state.lastX ?? state.startX;
+    const deltaX = endX - state.startX;
+    if (Math.abs(deltaX) > swipeThreshold) {
+      if (deltaX < 0) next();
+      else prev();
+    }
+
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    resetSwipeState();
+  };
+
+  const handlePointerDown = (event) => {
+    if (swipeStateRef.current.active) {
+      return;
+    }
+
+    swipeStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      active: true,
+    };
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) {
+      return;
+    }
+    const currentX =
+      typeof event.clientX === "number" && !Number.isNaN(event.clientX)
+        ? event.clientX
+        : state.lastX ?? state.startX;
+    swipeStateRef.current = { ...state, lastX: currentX };
+  };
+
+  const handlePointerCancel = (event) => {
+    const state = swipeStateRef.current;
+    if (state.pointerId === event.pointerId) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+      resetSwipeState();
+    }
+  };
+
   return (
     <section className="relative mx-auto flex h-full w-full max-w-5xl flex-col justify-between gap-4">
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-[2.3rem] border border-white/5 bg-gradient-to-br from-gray-800/70 via-gray-900/80 to-gray-950 px-4 py-10 shadow-2xl shadow-black/40 backdrop-blur"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerCancel}
+        onPointerLeave={handlePointerCancel}
       >
         <div
           className="relative mx-auto w-full max-w-4xl"
@@ -171,16 +240,15 @@ export default function ProductShowcase({
                     rotate,
                     zIndex: isActive ? 40 : 30,
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.15}
-                  dragMomentum={false}
-                  whileTap={{ cursor: "grabbing" }}
-                  onDragEnd={(_, info) => {
-                    if (info.offset.x < -80) next();
-                    if (info.offset.x > 80) prev();
+                  transition={{
+                    type: "spring",
+                    stiffness: 320,
+                    damping: 34,
+                    mass: 0.78,
                   }}
+                  whileTap={
+                    isActive ? { scale: 0.98 } : { scale: scale * 0.98 }
+                  }
                   onClick={() => {
                     if (!isActive) goTo(index);
                   }}
@@ -250,18 +318,26 @@ export default function ProductShowcase({
           const active = item.relative === 0;
           const distance = Math.abs(item.relative);
           return (
-            <button
+            <motion.button
               key={item.key}
               type="button"
               onClick={() => goTo(item.targetIndex)}
               className={cn(
-                "rounded-full transition-all",
-                active
-                  ? "h-3 w-12 bg-[rgb(204,31,47)]"
-                  : "h-2.5 bg-white/30 hover:bg-white/60",
-                !active && distance === 1 && "w-6",
-                !active && distance > 1 && "w-4 opacity-70"
+                "relative rounded-full",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
               )}
+              initial={false}
+              animate={{
+                width: active ? 48 : distance === 1 ? 26 : 18,
+                height: active ? 12 : 10,
+                opacity: active ? 1 : distance === 1 ? 0.74 : 0.45,
+                backgroundColor: active
+                  ? "rgb(204,31,47)"
+                  : "rgba(255,255,255,0.45)",
+              }}
+              whileHover={{ opacity: 0.95 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
               aria-label={`Bild ${item.targetIndex + 1} anzeigen`}
             />
           );

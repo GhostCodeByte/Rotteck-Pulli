@@ -34,13 +34,13 @@ npm run preview
 
 ## Umgebungsvariablen
 
-| Variable | Kontext | Beschreibung |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | Client (Vite) | Supabase Projekt-URL. |
-| `VITE_SUPABASE_ANON_KEY` | Client (Vite) | Public Anon Key für Lesezugriffe. |
-| `SUPABASE_URL` | Serverless Funktion | Supabase Projekt-URL (identisch zur Client-URL). |
-| `SUPABASE_SERVICE_ROLE_KEY` | Serverless Funktion | Service Role Key für Schreibzugriffe – **nur** auf dem Server speichern! |
-| `ADMIN_PORTAL_PASSWORD` | Serverless Funktion | Starkes Passwort für das geschützte Admin-Portal. Wird ausschließlich serverseitig geprüft. |
+| Variable                    | Kontext             | Beschreibung                                                                                |
+| --------------------------- | ------------------- | ------------------------------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`         | Client (Vite)       | Supabase Projekt-URL.                                                                       |
+| `VITE_SUPABASE_ANON_KEY`    | Client (Vite)       | Public Anon Key für Lesezugriffe.                                                           |
+| `SUPABASE_URL`              | Serverless Funktion | Supabase Projekt-URL (identisch zur Client-URL).                                            |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serverless Funktion | Service Role Key für Schreibzugriffe – **nur** auf dem Server speichern!                    |
+| `ADMIN_PORTAL_PASSWORD`     | Serverless Funktion | Starkes Passwort für das geschützte Admin-Portal. Wird ausschließlich serverseitig geprüft. |
 
 ### `.env.local` (lokal)
 
@@ -51,7 +51,7 @@ VITE_SUPABASE_ANON_KEY=<dein-anon-key>
 
 ### Vercel (Production/Staging)
 
-Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
+Im Vercel-Dashboard unter _Settings → Environment Variables_ hinterlegen:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
@@ -71,9 +71,8 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
      created_at timestamp with time zone default now(),
      email text not null,
      items jsonb not null,
-     order_hash text not null unique,
-     status text not null default 'pending',
-     payment_reference text
+   order_hash text not null unique,
+   status text not null default 'pending'
    );
    ```
 
@@ -117,7 +116,7 @@ curl -X POST http://localhost:3000/api/create-order \
 
 - Passwort-geschützter Bereich. Zugriff erfolgt über das Formular, wobei das Passwort ausschließlich in der API geprüft wird (`ADMIN_PORTAL_PASSWORD`).
 - Dashboard summiert Bestellungen nach Status, Farbe, Größe und Kombinationen.
-- Bestellung kann über den Bestellcode als „bezahlt“ markiert werden; optional wird der Zahlungs-Verwendungszweck gespeichert.
+- Bestellung kann über den Bestellcode als „bezahlt“ markiert werden.
 - Die zugehörigen API-Routen (`/api/admin-summary`, `/api/mark-order-paid`) prüfen das Passwort serverseitig per Timing-safe Vergleich.
 
 ## Nächste Schritte / Ideen

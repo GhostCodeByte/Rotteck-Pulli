@@ -116,14 +116,18 @@ export default function CartPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-white">Warenkorb</h1>
         {hasItems ? (
-          <span className="text-sm text-white/60">
+          <p className="text-sm text-white/60">
             {totalQuantity} Artikel insgesamt
-            Gespeichert für{" "}
-            <span className="font-medium">{orderReceipt.email}</span> am{" "}
-            {new Date(orderReceipt.createdAt).toLocaleString("de-DE")}
+            {customerEmail ? (
+              <>
+                {" · "}
+                Gespeichert für{" "}
+                <span className="font-medium text-white">{customerEmail}</span>
+              </>
+            ) : null}
           </p>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       {hasItems ? (
         <>

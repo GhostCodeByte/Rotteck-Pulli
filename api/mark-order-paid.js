@@ -4,13 +4,6 @@ import { getSupabaseAdminClient, requireAdminPassword } from "./_adminAuth.js";
 
 const ORDER_TABLE = "orders";
 
-function sanitiseReference(value) {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, 140);
-}
-
 export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -45,8 +38,6 @@ export default async function handler(request, response) {
       .json({ error: "Bitte gib einen gültigen Bestellcode an." });
   }
 
-  const paymentReference = sanitiseReference(payload?.paymentReference);
-
   const supabase = getSupabaseAdminClient(createClient);
   if (!supabase) {
     return response.status(500).json({
@@ -60,17 +51,18 @@ export default async function handler(request, response) {
       .from(ORDER_TABLE)
       .update({
         status: "paid",
-        payment_reference: paymentReference,
       })
       .eq("order_hash", orderCode)
-      .select("order_hash, status, payment_reference, updated_at")
+      .select("order_hash, status, updated_at")
       .single();
 
     if (error) {
       if (error.code === "PGRST116" || error.message?.includes("No rows")) {
         return response
           .status(404)
-          .json({ error: "Es wurde keine Bestellung mit diesem Code gefunden." });
+          .json({
+            error: "Es wurde keine Bestellung mit diesem Code gefunden.",
+          });
       }
       throw error;
     }
