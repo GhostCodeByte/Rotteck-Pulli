@@ -3,7 +3,6 @@ import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const MAX_ITEMS = 50;
-const MAX_STUDENT_NAME_LENGTH = 140;
 const ORDER_TABLE = "orders";
 const PRODUCT_NAME = "Pulli";
 
@@ -51,17 +50,11 @@ function sanitiseItem(rawItem) {
     ? Math.min(30, Math.max(1, quantityValue))
     : 1;
 
-  const studentName =
-    typeof rawItem.studentName === "string"
-      ? rawItem.studentName.trim().slice(0, MAX_STUDENT_NAME_LENGTH)
-      : "";
-
   return {
     product: PRODUCT_NAME,
     color,
     size,
     quantity,
-    studentName,
   };
 }
 

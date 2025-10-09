@@ -39,6 +39,11 @@ export default function Layout() {
   }, [isMenuOpen]);
 
   const closeMenu = () => setIsMenuOpen(false);
+  const navLinks = [
+    { label: "Startseite", to: "/" },
+    { label: "Warenkorb", to: "/cart" },
+    { label: "Admin", to: "/admin" },
+  ];
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-900 text-white">
@@ -118,18 +123,18 @@ export default function Layout() {
                 </button>
               </div>
               <nav className="flex flex-col gap-3 text-base font-semibold text-white">
-                {["Info", "Help", "Admin"].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
                     onClick={closeMenu}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left transition hover:border-[rgb(204,31,47)]/60 hover:bg-white/[0.08]"
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:border-[rgb(204,31,47)]/60 hover:bg-white/[0.08]"
                   >
-                    <span>{label}</span>
+                    <span>{link.label}</span>
                     <span aria-hidden="true" className="text-sm text-white/60">
                       →
                     </span>
-                  </button>
+                  </Link>
                 ))}
               </nav>
             </motion.aside>

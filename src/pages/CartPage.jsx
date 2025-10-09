@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
 import {
@@ -12,8 +13,14 @@ const PRODUCT_NAME = "Pulli";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CartPage() {
-  const { items, updateQuantity, updateCustomerEmail, customerEmail, clearCart } =
-    useCart();
+  const navigate = useNavigate();
+  const {
+    items,
+    updateQuantity,
+    updateCustomerEmail,
+    customerEmail,
+    clearCart,
+  } = useCart();
 
   const {
     submitOrder,
@@ -23,7 +30,6 @@ export default function CartPage() {
   } = useCheckout();
 
   const [emailError, setEmailError] = useState("");
-  const [orderReceipt, setOrderReceipt] = useState(null);
 
   const hasItems = items.length > 0;
 
@@ -94,13 +100,14 @@ export default function CartPage() {
 
     const response = await submitOrder(payload);
     if (response?.orderCode) {
-      setOrderReceipt({
+      const orderData = {
         orderCode: response.orderCode,
         email: trimmedEmail,
         createdAt: response.createdAt ?? new Date().toISOString(),
-      });
+      };
       clearCart();
       updateCustomerEmail("");
+      navigate("/order-success", { state: { order: orderData } });
     }
   };
 
@@ -111,27 +118,6 @@ export default function CartPage() {
         {hasItems ? (
           <span className="text-sm text-white/60">
             {totalQuantity} Artikel insgesamt
-          </span>
-        ) : (
-          <span className="text-sm text-white/60">
-            Füge Artikel hinzu, um eine Bestellung zu starten.
-          </span>
-        )}
-      </div>
-
-      {orderReceipt && (
-        <div className="flex flex-col gap-3 rounded-3xl border border-emerald-400/40 bg-emerald-500/10 p-5 text-emerald-100 shadow-lg shadow-emerald-900/30">
-          <h2 className="text-lg font-semibold text-emerald-100">
-            Bestellung gespeichert
-          </h2>
-          <p className="text-sm">
-            Wir haben deine Bestellung erhalten. Bitte gib bei der Überweisung
-            folgenden Bestellcode an, damit wir deine Zahlung zuordnen können:
-          </p>
-          <code className="inline-flex items-center justify-center rounded-2xl border border-emerald-300/40 bg-emerald-600/20 px-4 py-2 text-lg font-semibold tracking-wide">
-            {orderReceipt.orderCode}
-          </code>
-          <p className="text-xs text-emerald-200/80">
             Gespeichert für{" "}
             <span className="font-medium">{orderReceipt.email}</span> am{" "}
             {new Date(orderReceipt.createdAt).toLocaleString("de-DE")}
@@ -174,38 +160,40 @@ export default function CartPage() {
                     <span className="text-white/60">Größe:</span> {item.size}
                   </p>
 
-                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-48 sm:items-end">
-                    <div className="flex flex-col gap-1 sm:items-end">
-                      <span>Menge</span>
-                      <select
-                        value={Math.max(1, Math.floor(item.quantity ?? 1))}
-                        onChange={(event) =>
-                          updateQuantity(item.id, Number(event.target.value))
-                        }
-                        className="w-28 rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                      >
-                        {quantityOptions.map((option) => (
-                          <option
-                            key={option}
-                            value={option}
-                            className="bg-gray-900 text-white"
-                          >
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="flex w-full flex-col gap-2 text-sm text-white/70 sm:w-40">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span>Menge</span>
+                        <select
+                          value={Math.max(1, Math.floor(item.quantity ?? 1))}
+                          onChange={(event) =>
+                            updateQuantity(item.id, Number(event.target.value))
+                          }
+                          className="w-24 rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
+                        >
+                          {quantityOptions.map((option) => (
+                            <option
+                              key={option}
+                              value={option}
+                              className="bg-gray-900 text-white"
+                            >
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div className="flex flex-col items-end gap-1 text-right">
-                      <span className="text-xs font-medium uppercase tracking-wide text-white/60">
-                        Zwischensumme
-                      </span>
-                      <span className="text-lg font-semibold text-white">
-                        {lineTotal.toLocaleString("de-DE", {
-                          style: "currency",
-                          currency: "EUR",
-                        })}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 text-right">
+                        <span className="text-xs font-medium uppercase tracking-wide text-white/60">
+                          Zwischensumme
+                        </span>
+                        <span className="text-lg font-semibold text-white">
+                          {lineTotal.toLocaleString("de-DE", {
+                            style: "currency",
+                            currency: "EUR",
+                          })}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </li>

@@ -40,6 +40,7 @@ npm run preview
 | `VITE_SUPABASE_ANON_KEY` | Client (Vite) | Public Anon Key für Lesezugriffe. |
 | `SUPABASE_URL` | Serverless Funktion | Supabase Projekt-URL (identisch zur Client-URL). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Serverless Funktion | Service Role Key für Schreibzugriffe – **nur** auf dem Server speichern! |
+| `ADMIN_PORTAL_PASSWORD` | Serverless Funktion | Starkes Passwort für das geschützte Admin-Portal. Wird ausschließlich serverseitig geprüft. |
 
 ### `.env.local` (lokal)
 
@@ -56,6 +57,7 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
 - `VITE_SUPABASE_ANON_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_PORTAL_PASSWORD`
 
 > Tipp: `SUPABASE_SERVICE_ROLE_KEY` niemals im Client ausliefern. Er gehört ausschließlich in die Serverless-Funktion.
 
@@ -70,7 +72,8 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
      email text not null,
      items jsonb not null,
      order_hash text not null unique,
-     status text not null default 'pending'
+     status text not null default 'pending',
+     payment_reference text
    );
    ```
 
@@ -82,7 +85,7 @@ Im Vercel-Dashboard unter *Settings → Environment Variables* hinterlegen:
 
 ## API: `/api/create-order`
 
-- Erwartet `POST` mit JSON `{ email: string, items: Array<{ product, color, size, quantity, studentName }> }`.
+- Erwartet `POST` mit JSON `{ email: string, items: Array<{ product, color, size, quantity }> }`.
 - Validiert E-Mail-Adresse und Produkte, cappt Menge auf 30 pro Eintrag und maximal 50 Einträge.
 - Schreibt die Bestellung in Supabase und gibt `{ orderCode, createdAt }` zurück. Der `orderCode` ist ein Hash (12-stellig, Großbuchstaben), den Nutzer bei der Überweisung angeben sollen.
 - Liefert aussagekräftige Fehlermeldungen und HTTP-Statuscodes (400 für ungültige Daten, 500 bei Serverfehlern).
@@ -95,7 +98,7 @@ curl -X POST http://localhost:3000/api/create-order \
   -d '{
     "email": "max@example.com",
     "items": [
-      { "color": "rot", "size": "L", "quantity": 2, "studentName": "Max" }
+      { "color": "rot", "size": "L", "quantity": 2 }
     ]
   }'
 ```
@@ -104,15 +107,21 @@ curl -X POST http://localhost:3000/api/create-order \
 
 ## Sicherheit & Datenfluss
 
-1. Warenkorb, Schülernamen und E-Mail leben bis zum Kauf ausschließlich im Browser (Local Storage).
+1. Warenkorb und E-Mail leben bis zum Kauf ausschließlich im Browser (Local Storage).
 2. Erst beim Klick auf „Kaufen“ sendet der Client die Daten an `/api/create-order`.
 3. Die Serverless-Funktion nutzt den Service-Role-Key, validiert alle Felder und schreibt in Supabase.
 4. Der generierte Bestellcode wird sofort an den Client zurückgegeben und zusätzlich in Supabase gespeichert.
 5. Dank getrenntem Client-/Server-Setup bleiben alle sensiblen Informationen (Keys, Backoffice-Status) serverseitig geschützt.
 
+## Admin-Portal (`/admin`)
+
+- Passwort-geschützter Bereich. Zugriff erfolgt über das Formular, wobei das Passwort ausschließlich in der API geprüft wird (`ADMIN_PORTAL_PASSWORD`).
+- Dashboard summiert Bestellungen nach Status, Farbe, Größe und Kombinationen.
+- Bestellung kann über den Bestellcode als „bezahlt“ markiert werden; optional wird der Zahlungs-Verwendungszweck gespeichert.
+- Die zugehörigen API-Routen (`/api/admin-summary`, `/api/mark-order-paid`) prüfen das Passwort serverseitig per Timing-safe Vergleich.
+
 ## Nächste Schritte / Ideen
 
-- Admin-Oberfläche zum Abhaken eingegangener Überweisungen (Filter per `order_hash`).
 - Automatisierte E-Mail-Benachrichtigung über Supabase Functions oder Resend.
 - Export (CSV/Excel) für die Schulverwaltung.
 
