@@ -5,12 +5,6 @@ import { COLOR_VARIANTS, PRICE_IN_EURO } from "../data/productData.js";
 
 const PRODUCTION_PRICE_EURO = 18;
 
-function normaliseCountsRecord(record = {}) {
-  return Object.entries(record)
-    .map(([key, value]) => ({ key, value }))
-    .sort((a, b) => b.value - a.value);
-}
-
 export default function AdminPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -50,38 +44,48 @@ export default function AdminPage() {
     return { totalOrders, paidOrders, unpaidOrders };
   }, [summary]);
 
-  const colorCounts = useMemo(
-    () =>
-      normaliseCountsRecord(summary?.itemsByColor).map((entry) => ({
-        ...entry,
-        label: colorLookup.get(entry.key) ?? entry.key,
-      })),
-    [summary, colorLookup]
-  );
-
-  const sizeCounts = useMemo(
-    () =>
-      normaliseCountsRecord(summary?.itemsBySize).map((entry) => ({
-        ...entry,
-        label: entry.key.toUpperCase(),
-      })),
-    [summary]
-  );
-
   const variantCounts = useMemo(() => {
-    if (!summary?.itemsByVariant) return [];
-    return Object.entries(summary.itemsByVariant)
-      .map(([comboKey, value]) => {
-        const [colorKey = "", sizeKey = ""] = comboKey.split("__");
-        const colorLabel = colorLookup.get(colorKey) ?? colorKey;
-        return {
-          key: comboKey,
-          label: `${colorLabel} ${sizeKey.toUpperCase()}`,
-          value,
+    const map = new Map();
+
+    orders.forEach((order) => {
+      const isPaid = order?.status === "paid";
+      const items = Array.isArray(order?.items) ? order.items : [];
+
+      items.forEach((item) => {
+        const rawColor =
+          typeof item?.color === "string" ? item.color.trim() : "";
+        const rawSize = typeof item?.size === "string" ? item.size.trim() : "";
+        const quantity = Number.isFinite(item?.quantity)
+          ? Math.max(0, Number.parseInt(item.quantity, 10))
+          : 0;
+
+        if (!rawColor || !rawSize || quantity <= 0) return;
+
+        const colorKey = rawColor.toLowerCase();
+        const sizeKey = rawSize.toUpperCase();
+        const key = `${colorKey}__${sizeKey}`;
+
+        const entry = map.get(key) ?? {
+          key,
+          colorLabel: colorLookup.get(colorKey) ?? rawColor,
+          sizeLabel: sizeKey,
+          paid: 0,
+          unpaid: 0,
+          total: 0,
         };
-      })
-      .sort((a, b) => b.value - a.value);
-  }, [summary, colorLookup]);
+
+        if (isPaid) {
+          entry.paid += quantity;
+        } else {
+          entry.unpaid += quantity;
+        }
+        entry.total = entry.paid + entry.unpaid;
+        map.set(key, entry);
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [orders, colorLookup]);
 
   const ordersPerDay = useMemo(() => {
     const map = new Map();
@@ -359,12 +363,7 @@ export default function AdminPage() {
 
           <FinancialSummary financials={financials} />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <CountsPanel title="Nach Farbe" entries={colorCounts} />
-            <CountsPanel title="Nach Größe" entries={sizeCounts} />
-          </div>
-
-          <CountsPanel title="Farbe × Größe" entries={variantCounts} />
+          <VariantCountsTable entries={variantCounts} />
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/40">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -452,28 +451,55 @@ function SummaryCard({ title, value }) {
   );
 }
 
-function CountsPanel({ title, entries }) {
+function VariantCountsTable({ entries }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/40">
-      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-semibold text-white">Farbe × Größe</h2>
+        <span className="text-xs uppercase tracking-wide text-white/50">
+          Aufgeschlüsselt nach bezahlt und offen
+        </span>
+      </div>
+
       {entries && entries.length > 0 ? (
-        <ul className="mt-4 flex flex-col gap-2 text-sm text-white/80">
-          {entries.map((entry) => (
-            <li
-              key={entry.key}
-              className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-2"
-            >
-              <span className="font-semibold capitalize">
-                {entry.label ?? entry.key}
-              </span>
-              <span className="text-base font-bold text-white">
-                {entry.value}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full table-auto border-separate border-spacing-y-2 text-left text-sm">
+            <thead className="text-xs uppercase tracking-widest text-white/50">
+              <tr>
+                <th className="px-3 py-2">Farbe &amp; Größe</th>
+                <th className="px-3 py-2 text-right">Bezahlt</th>
+                <th className="px-3 py-2 text-right">Offen</th>
+                <th className="px-3 py-2 text-right">Summe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr
+                  key={entry.key}
+                  className="rounded-2xl bg-white/5 text-white/90"
+                >
+                  <td className="px-3 py-2 font-semibold text-white">
+                    <span className="capitalize">{entry.colorLabel}</span>
+                    <span className="ml-2 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white/80">
+                      {entry.sizeLabel}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold text-emerald-200">
+                    {entry.paid}
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold text-[rgb(255,186,186)]">
+                    {entry.unpaid}
+                  </td>
+                  <td className="px-3 py-2 text-right font-bold text-white">
+                    {entry.total}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p className="mt-3 text-sm text-white/60">Keine Daten vorhanden.</p>
+        <p className="mt-4 text-sm text-white/60">Keine Daten vorhanden.</p>
       )}
     </div>
   );
