@@ -164,16 +164,16 @@ export default function CartPage() {
                     <span className="text-white/60">Größe:</span> {item.size}
                   </p>
 
-                  <div className="flex w-full flex-col gap-2 text-sm text-white/70 sm:w-40">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                      <div className="flex flex-col gap-1">
+                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-52">
+                    <div className="flex flex-row items-start gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                      <div className="flex flex-col gap-1 flex-1 min-w-[6rem]">
                         <span>Menge</span>
                         <select
                           value={Math.max(1, Math.floor(item.quantity ?? 1))}
                           onChange={(event) =>
                             updateQuantity(item.id, Number(event.target.value))
                           }
-                          className="w-24 rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
+                          className="w-full sm:w-24 rounded-2xl border border-white/10 bg-gray-900/80 px-3 py-2 text-sm font-semibold text-white shadow-inner shadow-black/30 focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
                         >
                           {quantityOptions.map((option) => (
                             <option
@@ -187,7 +187,7 @@ export default function CartPage() {
                         </select>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1 text-right">
+                      <div className="flex flex-col items-end gap-1 text-right sm:min-w-[7rem]">
                         <span className="text-xs font-medium uppercase tracking-wide text-white/60">
                           Zwischensumme
                         </span>
