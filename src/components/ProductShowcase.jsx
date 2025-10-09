@@ -171,6 +171,9 @@ export default function ProductShowcase({
     containerWidth ? containerWidth * 0.08 : 60
   );
 
+  const shouldHandleSwipeGesture = (target) =>
+    !target?.closest?.("[data-swipe-ignore='true']");
+
   const resetSwipeState = () => {
     swipeStateRef.current = { id: null, startX: 0, lastX: 0, active: false };
   };
@@ -199,17 +202,20 @@ export default function ProductShowcase({
 
   const finishSwipe = (id, clientX) => {
     const state = swipeStateRef.current;
-    if (!state.active || state.id !== id) return;
+    if (!state.active || state.id !== id)
+      return { handled: false, exceeded: false, delta: 0 };
     const finalX =
       typeof clientX === "number" && !Number.isNaN(clientX)
         ? clientX
         : state.lastX ?? state.startX;
     const deltaX = finalX - state.startX;
-    if (Math.abs(deltaX) > swipeThreshold) {
+    const exceeded = Math.abs(deltaX) > swipeThreshold;
+    if (exceeded) {
       if (deltaX < 0) next();
       else prev();
     }
     resetSwipeState();
+    return { handled: true, exceeded, delta: deltaX };
   };
 
   const cancelSwipe = (id) => {
@@ -217,7 +223,20 @@ export default function ProductShowcase({
     resetSwipeState();
   };
 
+  const handleTapTarget = (target) => {
+    const element = target?.closest?.("[data-image-index]");
+    if (!element) return;
+    const index = Number(element.getAttribute("data-image-index"));
+    if (Number.isNaN(index)) return;
+    if (index === current) {
+      if (!isModalOpen) setIsModalOpen(true);
+    } else {
+      goTo(index);
+    }
+  };
+
   const handlePointerDown = (event) => {
+    if (!shouldHandleSwipeGesture(event.target)) return;
     startSwipe(event.pointerId, event.clientX);
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
@@ -227,8 +246,11 @@ export default function ProductShowcase({
   };
 
   const handlePointerUp = (event) => {
-    finishSwipe(event.pointerId, event.clientX);
+    const result = finishSwipe(event.pointerId, event.clientX);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
+    if (result?.handled && !result.exceeded) {
+      handleTapTarget(event.target);
+    }
   };
 
   const handlePointerCancel = (event) => {
@@ -242,6 +264,7 @@ export default function ProductShowcase({
   };
 
   const handleTouchStart = (event) => {
+    if (!shouldHandleSwipeGesture(event.target)) return;
     const touch = event.touches?.[0];
     if (!touch) return;
     startSwipe(touch.identifier, touch.clientX);
@@ -264,7 +287,10 @@ export default function ProductShowcase({
       (entry) => entry.identifier === state.id
     );
     if (!touch) return;
-    finishSwipe(touch.identifier, touch.clientX);
+    const result = finishSwipe(touch.identifier, touch.clientX);
+    if (result?.handled && !result.exceeded) {
+      handleTapTarget(event.target);
+    }
   };
 
   const handleTouchCancel = (event) => {
@@ -342,6 +368,7 @@ export default function ProductShowcase({
                     "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 touch-pan-y",
                     isActive ? "cursor-zoom-in" : "cursor-pointer"
                   )}
+                  data-image-index={index}
                   initial={false}
                   animate={{
                     x: translateX,
@@ -407,6 +434,7 @@ export default function ProductShowcase({
             <button
               type="button"
               onClick={prev}
+              data-swipe-ignore="true"
               className="pointer-events-auto h-full w-24 cursor-w-resize rounded-l-[2.5rem] bg-gradient-to-r from-black/30 via-black/0 to-transparent opacity-40 transition hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40"
               aria-label="Vorheriges Bild"
             >
@@ -415,6 +443,7 @@ export default function ProductShowcase({
             <button
               type="button"
               onClick={next}
+              data-swipe-ignore="true"
               className="pointer-events-auto h-full w-24 cursor-e-resize rounded-r-[2.5rem] bg-gradient-to-l from-black/30 via-black/0 to-transparent opacity-40 transition hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40"
               aria-label="Nächstes Bild"
             >
@@ -433,24 +462,40 @@ export default function ProductShowcase({
               key={item.key}
               type="button"
               onClick={() => goTo(item.targetIndex)}
+              data-swipe-ignore="true"
               className={cn(
-                "relative rounded-full",
+                "relative flex h-7 min-w-[2rem] items-center justify-center overflow-hidden rounded-full px-1.5",
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
               )}
               initial={false}
               animate={{
-                width: active ? 48 : distance === 1 ? 26 : 18,
-                height: active ? 12 : 10,
-                opacity: active ? 1 : distance === 1 ? 0.74 : 0.45,
-                backgroundColor: active
-                  ? "rgb(204,31,47)"
-                  : "rgba(255,255,255,0.45)",
+                opacity: active ? 1 : distance === 1 ? 0.85 : 0.55,
+                scale: active ? 1 : 0.94,
               }}
-              whileHover={{ opacity: 0.95 }}
+              whileHover={{ scale: active ? 1.04 : 0.98, opacity: 1 }}
               whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              transition={{ type: "spring", stiffness: 440, damping: 32 }}
               aria-label={`Bild ${item.targetIndex + 1} anzeigen`}
-            />
+            >
+              {active ? (
+                <motion.span
+                  layoutId="active-dot-highlight"
+                  className="absolute inset-0 rounded-full bg-[rgb(204,31,47)]/75 shadow-[0_0_25px_rgba(204,31,47,0.55)]"
+                  transition={{ type: "spring", stiffness: 460, damping: 32 }}
+                />
+              ) : null}
+              <motion.span
+                className="relative block h-2 rounded-full"
+                initial={false}
+                animate={{
+                  width: active ? 32 : distance === 1 ? 20 : 12,
+                  backgroundColor: active
+                    ? "rgba(255,255,255,1)"
+                    : "rgba(255,255,255,0.55)",
+                }}
+                transition={{ type: "spring", stiffness: 520, damping: 34 }}
+              />
+            </motion.button>
           );
         })}
       </div>

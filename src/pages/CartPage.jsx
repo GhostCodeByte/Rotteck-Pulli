@@ -165,8 +165,8 @@ export default function CartPage() {
                     <span className="text-white/60">Größe:</span> {item.size}
                   </p>
 
-                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-[18rem]">
-                    <div className="flex flex-wrap items-stretch justify-end gap-4">
+                  <div className="flex w-full flex-col gap-3 text-sm text-white/70 sm:w-[20rem]">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-5">
                       <div className="flex min-w-[9rem] flex-col items-start gap-1 text-left whitespace-nowrap sm:items-end sm:text-right">
                         <span className="text-xs font-medium uppercase tracking-wide text-white/60">
                           Zwischensumme
@@ -179,7 +179,7 @@ export default function CartPage() {
                         </span>
                       </div>
 
-                      <div className="flex min-w-[8.5rem] flex-1 flex-col gap-1 text-left">
+                      <div className="flex min-w-[8.5rem] flex-1 flex-col gap-1 text-left sm:max-w-[9.5rem]">
                         <span>Menge</span>
                         <select
                           value={Math.max(1, Math.floor(item.quantity ?? 1))}
@@ -203,7 +203,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300/70"
+                        className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center self-end rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300/70 sm:self-auto"
                         aria-label="Artikel entfernen"
                       >
                         <svg
