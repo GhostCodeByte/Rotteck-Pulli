@@ -16,6 +16,7 @@ import {
 } from "../data/productData.js";
 import { cn } from "../utils/cn.js";
 
+const MOTION_USED = !!motion;
 const sideScale = 0.82;
 
 export default function ProductShowcase({
@@ -170,8 +171,10 @@ export default function ProductShowcase({
     });
   }, [current, total]);
 
-  const swipeThreshold = 50;
-  const directionLockThreshold = 15;
+  const swipeThreshold = 32;
+  const directionLockThreshold = 10;
+  const supportsPointer =
+    typeof window !== "undefined" && "PointerEvent" in window;
 
   const shouldHandleSwipeGesture = (target) =>
     !target?.closest?.("[data-swipe-ignore='true']");
@@ -288,10 +291,12 @@ export default function ProductShowcase({
 
   const handlePointerUp = (event) => {
     const result = finishSwipe(event.pointerId, event.clientX, event.clientY);
+
     event.currentTarget.releasePointerCapture?.(event.pointerId);
-    if (result?.handled && !result.exceeded) {
-      handleTapTarget(event.target);
-    }
+
+    void result;
+
+    // Tap handling is handled via figure onClick to avoid duplicate triggers
   };
 
   const handlePointerCancel = (event) => {
@@ -307,47 +312,68 @@ export default function ProductShowcase({
   };
 
   const handleTouchStart = (event) => {
+    if (supportsPointer) return;
     if (!shouldHandleSwipeGesture(event.target)) return;
+
     const touch = event.touches?.[0];
+
     if (!touch) return;
+
     startSwipe(touch.identifier, touch.clientX, touch.clientY);
   };
 
   const handleTouchMove = (event) => {
+    if (supportsPointer) return;
     const state = swipeStateRef.current;
+
     if (!state.active) return;
+
     const touch = Array.from(event.touches || []).find(
       (entry) => entry.identifier === state.id,
     );
+
     if (!touch) return;
+
     updateSwipePosition(touch.identifier, touch.clientX, touch.clientY);
 
     // Prevent vertical scrolling if horizontal swipe is detected
+
     if (state.isHorizontal) {
       event.preventDefault();
     }
   };
 
   const handleTouchEnd = (event) => {
+    if (supportsPointer) return;
     const state = swipeStateRef.current;
+
     if (!state.active) return;
+
     const touch = Array.from(event.changedTouches || []).find(
       (entry) => entry.identifier === state.id,
     );
+
     if (!touch) return;
+
     const result = finishSwipe(touch.identifier, touch.clientX, touch.clientY);
+
     if (result?.handled && !result.exceeded) {
       handleTapTarget(event.target);
     }
   };
 
   const handleTouchCancel = (event) => {
+    if (supportsPointer) return;
     const state = swipeStateRef.current;
+
     if (!state.active) return;
+
     const touch = Array.from(event.changedTouches || []).find(
       (entry) => entry.identifier === state.id,
     );
+
     if (!touch) return;
+
     cancelSwipe(touch.identifier);
   };
 
@@ -372,18 +398,26 @@ export default function ProductShowcase({
   };
 
   const handleModalTouchStart = (event) => {
+    if (supportsPointer) return;
     const touch = event.touches?.[0];
+
     if (!touch) return;
+
     startSwipe(touch.identifier, touch.clientX, touch.clientY);
   };
 
   const handleModalTouchMove = (event) => {
+    if (supportsPointer) return;
     const state = swipeStateRef.current;
+
     if (!state.active) return;
+
     const touch = Array.from(event.touches || []).find(
       (entry) => entry.identifier === state.id,
     );
+
     if (!touch) return;
+
     updateSwipePosition(touch.identifier, touch.clientX, touch.clientY);
 
     if (state.isHorizontal) {
@@ -392,12 +426,17 @@ export default function ProductShowcase({
   };
 
   const handleModalTouchEnd = (event) => {
+    if (supportsPointer) return;
     const state = swipeStateRef.current;
+
     if (!state.active) return;
+
     const touch = Array.from(event.changedTouches || []).find(
       (entry) => entry.identifier === state.id,
     );
+
     if (!touch) return;
+
     finishSwipe(touch.identifier, touch.clientX, touch.clientY);
   };
 
@@ -464,21 +503,33 @@ export default function ProductShowcase({
                   key={`${src}-${index}`}
                   className={cn(
                     "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 touch-pan-y",
+
                     isActive ? "cursor-zoom-in" : "cursor-pointer",
                   )}
                   data-image-index={index}
+                  onClick={() => {
+                    if (index === current) setIsModalOpen(true);
+                    else goTo(index);
+                  }}
                   initial={false}
                   animate={{
                     x: translateX,
+
                     scale,
+
                     opacity,
+
                     rotate,
+
                     zIndex: isActive ? 40 : 30,
                   }}
                   transition={{
                     type: "spring",
+
                     stiffness: 320,
+
                     damping: 34,
+
                     mass: 0.78,
                   }}
                   whileTap={
@@ -540,7 +591,8 @@ export default function ProductShowcase({
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-2.5">
+      <div className="relative flex items-center justify-center gap-2.5 px-2">
+        <span className="pointer-events-none absolute inset-x-4 top-1/2 -z-10 h-2 -translate-y-1/2 rounded-full bg-[rgb(204,31,47)]/35 shadow-[0_0_25px_rgba(204,31,47,0.35)]" />
         {dotItems.map((item) => {
           const active = item.relative === 0;
           const distance = Math.abs(item.relative);
@@ -564,24 +616,18 @@ export default function ProductShowcase({
               transition={{ type: "spring", stiffness: 440, damping: 32 }}
               aria-label={`Bild ${item.targetIndex + 1} anzeigen`}
             >
-              <motion.span
-                className="absolute inset-0 rounded-full bg-[rgb(204,31,47)]/75 shadow-[0_0_25px_rgba(204,31,47,0.55)]"
-                initial={false}
-                animate={{
-                  opacity: active ? 1 : 0,
-                }}
-                transition={{ type: "spring", stiffness: 460, damping: 32 }}
-              />
-              <motion.span
-                layoutId="active-dot-indicator"
-                className="relative block h-2 rounded-full bg-white"
-                initial={false}
-                animate={{
-                  width: active ? 32 : distance === 1 ? 20 : 12,
-                  opacity: active ? 1 : 0.55,
-                }}
-                transition={{ type: "spring", stiffness: 520, damping: 34 }}
-              />
+              {/* Static red track moved to container */}
+
+              {active ? (
+                <motion.span
+                  layoutId="active-dot-indicator"
+                  className="relative block h-2 w-8 rounded-full bg-white"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 520, damping: 34 }}
+                />
+              ) : (
+                <span className="relative block h-2 w-3 rounded-full opacity-0" />
+              )}
             </motion.button>
           );
         })}
