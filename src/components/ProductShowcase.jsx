@@ -15,6 +15,7 @@ import {
   SIZE_OPTIONS,
 } from "../data/productData.js";
 import { cn } from "../utils/cn.js";
+import AddToCartBar from "./AddToCartBar.jsx";
 
 const MOTION_USED = !!motion;
 const sideScale = 0.82;
@@ -24,6 +25,7 @@ export default function ProductShowcase({
   onColorChange,
   selectedSize,
   onSizeChange,
+  onAddToCart,
 }) {
   const colorSelectId = useId();
   const images = useMemo(
@@ -649,12 +651,12 @@ export default function ProductShowcase({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-        <div className="flex flex-col">
+      <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 sm:flex-row sm:flex-wrap sm:items-end sm:justify-start sm:gap-5">
+        <div className="flex flex-col gap-1 sm:min-w-[12rem]">
           <span className="text-xs uppercase tracking-widest text-white/60">
             Preis
           </span>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2">
             <span className="text-3xl font-semibold text-white">
               {PRICE_IN_EURO.toLocaleString("de-DE", {
                 style: "currency",
@@ -664,7 +666,7 @@ export default function ProductShowcase({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+  <div className="flex flex-col gap-1.5 sm:min-w-[12rem] sm:flex-1 sm:flex-row sm:items-center sm:gap-3">
           <label
             htmlFor="size-select"
             className="text-xs uppercase tracking-widest text-white/60"
@@ -693,6 +695,15 @@ export default function ProductShowcase({
             </span>
           </div>
         </div>
+
+        {typeof onAddToCart === "function" && (
+          <div className="flex w-full flex-col sm:flex-[0_0_auto]">
+            <AddToCartBar
+              onAdd={onAddToCart}
+              className="w-full sm:w-auto"
+            />
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

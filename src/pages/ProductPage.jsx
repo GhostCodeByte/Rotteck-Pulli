@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import ProductShowcase from "../components/ProductShowcase.jsx";
-import AddToCartBar from "../components/AddToCartBar.jsx";
 import {
   COLOR_VARIANTS,
   DEFAULT_COLOR,
@@ -87,9 +86,9 @@ export default function ProductPage() {
           onColorChange={setActiveColor}
           selectedSize={selectedSize}
           onSizeChange={setSelectedSize}
+          onAddToCart={handleAddToCart}
         />
       </div>
-      <AddToCartBar onAdd={handleAddToCart} className="mt-auto" />
     </div>
   );
 }
