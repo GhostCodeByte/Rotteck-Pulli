@@ -112,21 +112,12 @@ export default function OrderSuccessPage() {
             ? "Der Bestellcode wurde in die Zwischenablage kopiert."
             : copyStatus === "error"
               ? "Der Bestellcode konnte nicht automatisch kopiert werden. Bitte kopiere ihn manuell."
-              : "Tippe auf \"Code kopieren\", um den Bestellcode in die Zwischenablage zu legen."}
+              : ""}
         </span>
         <p className="text-xs text-emerald-100/80">
           Gespeichert für {" "}
           <span className="font-medium text-emerald-50">{order.email}</span> am {" "}
           {createdAt}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 text-white/80 shadow-inner shadow-black/40">
-        <p className="text-sm">
-          Du kannst diese Seite als Screenshot sichern oder den Bestellcode notieren.
-        </p>
-        <p className="text-sm">
-          Sobald deine Überweisung bei uns eingeht, melden wir uns bei dir.
         </p>
       </div>
 
@@ -141,9 +132,6 @@ export default function OrderSuccessPage() {
         <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-white/80 shadow-inner shadow-black/40">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold text-white">Letzte Bestellungen</h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-white/40">
-              Nur auf diesem Gerät gespeichert
-            </span>
           </div>
           <ol className="flex flex-col gap-3">
             {history.map((entry) => {
@@ -161,15 +149,6 @@ export default function OrderSuccessPage() {
                     <span className="text-base font-semibold tracking-wide">
                       {entry.orderCode}
                     </span>
-                    {isCurrent ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-100">
-                        Aktuelle Bestellung
-                      </span>
-                    ) : (
-                      <span className="text-xs uppercase tracking-[0.3em] text-white/50">
-                        Archiviert
-                      </span>
-                    )}
                   </div>
                   <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-medium text-white">

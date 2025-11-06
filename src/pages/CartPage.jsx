@@ -116,16 +116,10 @@ export default function CartPage() {
     <section className="flex w-full max-w-4xl flex-col gap-6 text-white">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-white">Warenkorb</h1>
-        {hasItems ? (
+        {hasItems && customerEmail ? (
           <p className="text-sm text-white/60">
-            {totalQuantity} Artikel insgesamt
-            {customerEmail ? (
-              <>
-                {" · "}
-                Gespeichert für{" "}
-                <span className="font-medium text-white">{customerEmail}</span>
-              </>
-            ) : null}
+            Gespeichert für{" "}
+            <span className="font-medium text-white">{customerEmail}</span>
           </p>
         ) : null}
       </div>
