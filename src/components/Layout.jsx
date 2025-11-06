@@ -61,6 +61,7 @@ export default function Layout() {
       },
     },
     { label: "Warenkorb", to: "/cart" },
+    { label: "Letzte Bestellungen", to: "/orders" },
     { label: "Admin", to: "/admin" },
   ];
 

@@ -1,52 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 
-const HISTORY_STORAGE_KEY = "rotteck-pulli:order-history";
-const MAX_HISTORY_ENTRIES = 5;
-
-function canUseLocalStorage() {
-  return typeof window !== "undefined" && !!window.localStorage;
-}
-
-function loadHistoryFromStorage() {
-  if (!canUseLocalStorage()) return [];
-
-  try {
-    const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.warn("Konnte Bestellhistorie nicht lesen:", error);
-    return [];
-  }
-}
-
-function persistHistory(entries) {
-  if (!canUseLocalStorage()) return;
-
-  try {
-    window.localStorage.setItem(
-      HISTORY_STORAGE_KEY,
-      JSON.stringify(entries ?? [])
-    );
-  } catch (error) {
-    console.warn("Konnte Bestellhistorie nicht speichern:", error);
-  }
-}
-
-function formatDateTime(value) {
-  if (!value) return "";
-
-  try {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString("de-DE");
-  } catch (error) {
-    return value;
-  }
-}
+import {
+  addOrderToHistory,
+  formatOrderDateTime,
+  loadOrderHistory,
+} from "../utils/orderHistory.js";
 
 export default function OrderSuccessPage() {
   const location = useLocation();
@@ -58,28 +17,21 @@ export default function OrderSuccessPage() {
 
   const orderTimestamp = order.createdAt ?? new Date().toISOString();
   const createdAt = useMemo(
-    () => formatDateTime(orderTimestamp),
+    () => formatOrderDateTime(orderTimestamp),
     [orderTimestamp]
   );
 
   const [copyStatus, setCopyStatus] = useState("idle");
-  const [history, setHistory] = useState(() => loadHistoryFromStorage());
+  const [history, setHistory] = useState(() => loadOrderHistory());
 
   useEffect(() => {
     if (!order?.orderCode) return;
 
-    const entry = {
+    const updated = addOrderToHistory({
       orderCode: order.orderCode,
       email: order.email,
       createdAt: orderTimestamp,
-    };
-
-    const existing = loadHistoryFromStorage();
-    const filtered = existing.filter(
-      (item) => item.orderCode !== entry.orderCode
-    );
-    const updated = [entry, ...filtered].slice(0, MAX_HISTORY_ENTRIES);
-    persistHistory(updated);
+    });
     setHistory(updated);
   }, [order?.orderCode, order?.email, orderTimestamp]);
 
@@ -224,7 +176,7 @@ export default function OrderSuccessPage() {
                       {entry.email}
                     </span>
                     <span className="text-white/60">
-                      {formatDateTime(entry.createdAt)}
+                      {formatOrderDateTime(entry.createdAt)}
                     </span>
                   </div>
                 </li>
