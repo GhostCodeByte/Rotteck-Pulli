@@ -169,20 +169,23 @@ export function CartProvider({ children }) {
         item.id === id
           ? {
               ...item,
-              studentName:
-                typeof name === "string" ? name.slice(0, 140) : "",
+              studentName: typeof name === "string" ? name.slice(0, 140) : "",
             }
           : item
       )
     );
   }, []);
 
+  const removeItem = useCallback((id) => {
+    if (!id) return;
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
   const updateCustomerEmail = useCallback((value) => {
     setCustomerEmail((prev) => {
-      const nextValue =
-        typeof value === "function" ? value(prev) : value ?? "";
+      const nextValue = typeof value === "function" ? value(prev) : value ?? "";
       if (typeof nextValue !== "string") return "";
       return nextValue.trim().slice(0, 256);
     });
@@ -202,6 +205,7 @@ export function CartProvider({ children }) {
       updateCustomerEmail,
       customerEmail,
       clearCart,
+      removeItem,
       count,
     }),
     [
@@ -213,6 +217,7 @@ export function CartProvider({ children }) {
       updateCustomerEmail,
       customerEmail,
       clearCart,
+      removeItem,
     ]
   );
 
