@@ -6,6 +6,7 @@ import {
   formatOrderDateTime,
   loadOrderHistory,
 } from "../utils/orderHistory.js";
+import { fetchOrderStatuses } from "../utils/orderStatus.js";
 
 export default function OrderSuccessPage() {
   const location = useLocation();
@@ -23,6 +24,8 @@ export default function OrderSuccessPage() {
 
   const [copyStatus, setCopyStatus] = useState("idle");
   const [history, setHistory] = useState(() => loadOrderHistory());
+  const [orderDetails, setOrderDetails] = useState({});
+  const [selectedOrderCode, setSelectedOrderCode] = useState(null);
 
   useEffect(() => {
     if (!order?.orderCode) return;
@@ -34,6 +37,36 @@ export default function OrderSuccessPage() {
     });
     setHistory(updated);
   }, [order?.orderCode, order?.email, orderTimestamp]);
+
+  useEffect(() => {
+    if (!history.length) {
+      setOrderDetails({});
+      return;
+    }
+
+    const controller = new AbortController();
+    let isCancelled = false;
+
+    (async () => {
+      const results = await fetchOrderStatuses(history, {
+        signal: controller.signal,
+      });
+
+      if (isCancelled) return;
+
+      const next = {};
+      results.forEach((item) => {
+        if (!item?.orderCode) return;
+        next[item.orderCode] = item;
+      });
+      setOrderDetails(next);
+    })();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [history]);
 
   useEffect(() => {
     if (copyStatus === "idle") return;
@@ -136,34 +169,152 @@ export default function OrderSuccessPage() {
           <ol className="flex flex-col gap-3">
             {history.map((entry) => {
               const isCurrent = entry.orderCode === order.orderCode;
+              const details = orderDetails[entry.orderCode];
+              const status = details?.status ?? "pending";
+
+              const statusLabel =
+                status === "paid"
+                  ? "Bezahlt"
+                  : status === "unauthorised"
+                    ? "Angaben stimmen nicht"
+                    : status === "unknown"
+                      ? "Status unbekannt"
+                      : "Noch zu bezahlen...";
+
+              const statusClasses =
+                status === "paid"
+                  ? "text-emerald-200"
+                  : status === "unauthorised"
+                    ? "text-amber-200"
+                    : status === "unknown"
+                      ? "text-white/60"
+                      : "text-red-200";
+
               return (
                 <li
                   key={`${entry.orderCode}-${entry.createdAt}`}
-                  className={`flex flex-col gap-2 rounded-2xl border px-4 py-3 shadow transition ${
+                  className={`rounded-2xl border shadow transition ${
                     isCurrent
                       ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-50 shadow-emerald-900/30"
                       : "border-white/10 bg-white/10 text-white/80 shadow-black/30"
                   }`}
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-base font-semibold tracking-wide">
-                      {entry.orderCode}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between">
-                    <span className="font-medium text-white">
-                      {entry.email}
-                    </span>
-                    <span className="text-white/60">
-                      {formatOrderDateTime(entry.createdAt)}
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrderCode(entry.orderCode)}
+                    className="flex w-full flex-col gap-2 rounded-2xl px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-base font-semibold tracking-wide text-white">
+                        {entry.orderCode}
+                      </span>
+                      <span className={`text-sm font-medium ${statusClasses}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 text-xs text-white/80 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="font-medium text-white">
+                        {entry.email}
+                      </span>
+                      <span className="text-white/60">
+                        {formatOrderDateTime(entry.createdAt)}
+                      </span>
+                    </div>
+                  </button>
                 </li>
               );
             })}
           </ol>
         </div>
       )}
+
+      {selectedOrderCode ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8">
+          <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-gray-950/95 p-6 text-white shadow-2xl shadow-black/70">
+            <button
+              type="button"
+              onClick={() => setSelectedOrderCode(null)}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:border-white/30 hover:text-white"
+              aria-label="Details schließen"
+            >
+              <span className="text-lg">x</span>
+            </button>
+
+            <div className="flex flex-col gap-4">
+              <header className="flex flex-col gap-1">
+                <h3 className="text-xl font-semibold">Bestellung {selectedOrderCode}</h3>
+                {(() => {
+                  const details = orderDetails[selectedOrderCode];
+                  const status = details?.status ?? "pending";
+                  const label =
+                    status === "paid"
+                      ? "Bezahlt"
+                      : status === "unauthorised"
+                        ? "Angaben stimmen nicht"
+                        : status === "unknown"
+                          ? "Status unbekannt"
+                          : "Noch zu bezahlen...";
+
+                  return (
+                    <span className="text-sm text-white/70">Status: {label}</span>
+                  );
+                })()}
+              </header>
+
+              {(() => {
+                const details = orderDetails[selectedOrderCode];
+                const entry = history.find((item) => item.orderCode === selectedOrderCode);
+
+                return (
+                  <div className="flex flex-col gap-2 text-sm text-white/70">
+                    <span className="font-medium text-white">{entry?.email}</span>
+                    {details?.createdAt ? (
+                      <span>Erstellt: {formatOrderDateTime(details.createdAt)}</span>
+                    ) : null}
+                    {details?.updatedAt ? (
+                      <span>Aktualisiert: {formatOrderDateTime(details.updatedAt)}</span>
+                    ) : null}
+                  </div>
+                );
+              })()}
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
+                <span className="text-sm font-semibold uppercase tracking-wide text-white">
+                  Artikelübersicht
+                </span>
+                {(() => {
+                  const details = orderDetails[selectedOrderCode];
+                  if (!details?.items?.length) {
+                    return (
+                      <p className="text-sm text-white/60">
+                        Keine Artikeldetails gefunden.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <ul className="flex flex-col gap-2">
+                      {details.items.map((item, index) => (
+                        <li
+                          key={`${selectedOrderCode}-${index}`}
+                          className="flex flex-col gap-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2"
+                        >
+                          <span className="text-sm font-semibold text-white">
+                            {(item?.product ?? "Pulli").toString()} x {item?.quantity ?? 1}
+                          </span>
+                          <span className="text-xs text-white/60">
+                            Farbe: {item?.color ?? "unbekannt"} · Größe: {item?.size ?? "unbekannt"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
