@@ -97,21 +97,6 @@ export default function ProductShowcase({
     ? Math.min(sideWidth * 0.22, Math.max(28, containerWidth * 0.09))
     : sideWidth * 0.24;
   const spacingBase = centerDistance - innerOverlap + outerExposure;
-  const dotItems = useMemo(() => {
-    if (!total) return [];
-    const needsExtra = total % 2 === 0;
-    const displayCount = needsExtra ? total + 1 : total;
-    const half = Math.floor(displayCount / 2);
-    return Array.from({ length: displayCount }, (_, slotIndex) => {
-      const relative = slotIndex - half;
-      const targetIndex = (((current + relative) % total) + total) % total;
-      return {
-        key: `dot-${slotIndex}-${targetIndex}`,
-        targetIndex,
-        relative,
-      };
-    });
-  }, [current, total]);
 
   const swipeThreshold = Math.max(
     48,
@@ -312,38 +297,6 @@ export default function ProductShowcase({
           </div>
         )}
       </div>
-
-      <div className="flex items-center justify-center gap-2.5">
-        {dotItems.map((item) => {
-          const active = item.relative === 0;
-          const distance = Math.abs(item.relative);
-          return (
-            <motion.button
-              key={item.key}
-              type="button"
-              onClick={() => goTo(item.targetIndex)}
-              className={cn(
-                "relative rounded-full",
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
-              )}
-              initial={false}
-              animate={{
-                width: active ? 48 : distance === 1 ? 26 : 18,
-                height: active ? 12 : 10,
-                opacity: active ? 1 : distance === 1 ? 0.74 : 0.45,
-                backgroundColor: active
-                  ? "rgb(204,31,47)"
-                  : "rgba(255,255,255,0.45)",
-              }}
-              whileHover={{ opacity: 0.95 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              aria-label={`Bild ${item.targetIndex + 1} anzeigen`}
-            />
-          );
-        })}
-      </div>
-
       <div className="flex w-full flex-col gap-3 px-1 sm:flex-col sm:items-center sm:justify-center">
         <div className="sm:hidden">
           <label
