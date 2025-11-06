@@ -651,24 +651,10 @@ export default function ProductShowcase({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
-        <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-center">
-            <div className="flex flex-col gap-1 sm:min-w-[12rem]">
-              <span className="text-xs uppercase tracking-widest text-white/60">
-                Preis
-              </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-semibold text-white">
-                  {PRICE_IN_EURO.toLocaleString("de-DE", {
-                    style: "currency",
-                    currency: "EUR",
-                  })}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5 items-center sm:items-end">
+      <div className="flex w-full flex-col gap-4 md:flex-row md:items-center md:gap-6">
+        <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 md:flex-[0_0_66.666%] md:max-w-[66.666%]">
+          <div className="flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="flex w-full flex-col gap-1 text-center md:w-auto md:text-left">
               <label
                 htmlFor="size-select"
                 className="text-xs uppercase tracking-widest text-white/60"
@@ -697,14 +683,27 @@ export default function ProductShowcase({
                 </span>
               </div>
             </div>
+            <div className="flex w-full flex-col items-center gap-1 text-center md:w-auto md:items-end md:text-right">
+              <span className="text-xs uppercase tracking-widest text-white/60">
+                Preis
+              </span>
+              <div className="flex items-baseline gap-2 md:justify-end">
+                <span className="text-3xl font-semibold text-white">
+                  {PRICE_IN_EURO.toLocaleString("de-DE", {
+                    style: "currency",
+                    currency: "EUR",
+                  })}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         {typeof onAddToCart === "function" && (
-          <div className="flex w-full sm:w-auto sm:flex-shrink-0 sm:self-end">
+          <div className="flex w-full md:flex-[0_0_33.333%] md:max-w-[33.333%] md:justify-end">
             <AddToCartBar
               onAdd={onAddToCart}
-              className="w-full sm:w-auto"
+              className="w-full"
             />
           </div>
         )}
