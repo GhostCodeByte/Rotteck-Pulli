@@ -651,53 +651,54 @@ export default function ProductShowcase({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 sm:flex-row sm:flex-wrap sm:items-end sm:justify-start sm:gap-5">
-        <div className="flex flex-col gap-1 sm:min-w-[12rem]">
+      <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
+        <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40">
+          <div className="flex flex-col gap-1 sm:min-w-[12rem]">
           <span className="text-xs uppercase tracking-widest text-white/60">
             Preis
           </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-semibold text-white">
-              {PRICE_IN_EURO.toLocaleString("de-DE", {
-                style: "currency",
-                currency: "EUR",
-              })}
-            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-semibold text-white">
+                {PRICE_IN_EURO.toLocaleString("de-DE", {
+                  style: "currency",
+                  currency: "EUR",
+                })}
+              </span>
+            </div>
           </div>
-        </div>
-
-  <div className="flex flex-col gap-1.5 sm:min-w-[12rem] sm:flex-1 sm:flex-row sm:items-center sm:gap-3">
-          <label
-            htmlFor="size-select"
-            className="text-xs uppercase tracking-widest text-white/60"
-          >
-            Größe wählen
-          </label>
-          <div className="relative w-full sm:w-auto sm:shrink sm:[width:clamp(7.5rem,40vw,12.5rem)] sm:min-w-[7.5rem]">
-            <select
-              id="size-select"
-              value={selectedSize}
-              onChange={(event) => onSizeChange?.(event.target.value)}
-              className="w-full appearance-none rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-sm font-semibold text-white shadow-inner shadow-black/30 transition focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
+          <div className="flex flex-col gap-1.5 sm:items-end sm:text-right">
+            <label
+              htmlFor="size-select"
+              className="text-xs uppercase tracking-widest text-white/60"
             >
-              {SIZE_OPTIONS.map((size) => (
-                <option
-                  key={size}
-                  value={size}
-                  className="bg-gray-900 text-white"
-                >
-                  {size}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[rgb(204,31,47)]">
-              ▾
-            </span>
+              Größe wählen
+            </label>
+            <div className="relative w-full sm:w-auto sm:min-w-[7.5rem]">
+              <select
+                id="size-select"
+                value={selectedSize}
+                onChange={(event) => onSizeChange?.(event.target.value)}
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-sm font-semibold text-white shadow-inner shadow-black/30 transition focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40 sm:text-right"
+              >
+                {SIZE_OPTIONS.map((size) => (
+                  <option
+                    key={size}
+                    value={size}
+                    className="bg-gray-900 text-white"
+                  >
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[rgb(204,31,47)]">
+                ▾
+              </span>
+            </div>
           </div>
         </div>
 
         {typeof onAddToCart === "function" && (
-          <div className="flex w-full flex-col sm:flex-[0_0_auto]">
+          <div className="flex w-full sm:w-auto sm:flex-shrink-0 sm:self-end">
             <AddToCartBar
               onAdd={onAddToCart}
               className="w-full sm:w-auto"
