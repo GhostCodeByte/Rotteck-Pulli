@@ -46,7 +46,7 @@ export default function ProductShowcase({
     active: false,
     isHorizontal: null,
   });
-  const clickStartPosRef = useRef(null);
+  const preventClickUntilRef = useRef(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const total = images.length;
@@ -160,6 +160,7 @@ export default function ProductShowcase({
   const spacingBase = centerDistance - innerOverlap + outerExposure;
   const swipeThreshold = 32;
   const directionLockThreshold = 10;
+  const clickPreventionDelayMs = 100;
   const supportsPointer =
     typeof window !== "undefined" && "PointerEvent" in window;
 
@@ -269,9 +270,6 @@ export default function ProductShowcase({
   const handlePointerDown = (event) => {
     if (!shouldHandleSwipeGesture(event.target)) return;
     
-    // Track the starting position for click detection
-    clickStartPosRef.current = { x: event.clientX, y: event.clientY };
-    
     startSwipe(event.pointerId, event.clientX, event.clientY);
     // Don't use setPointerCapture as it interferes with clicks on child elements
     // event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -298,8 +296,7 @@ export default function ProductShowcase({
     // If there was significant movement (swipe), prevent click on figures
     if (result.exceeded) {
       // Temporarily mark that a swipe occurred to prevent immediate clicks
-      const now = Date.now();
-      clickStartPosRef.current = { preventUntil: now + 100 };
+      preventClickUntilRef.current = Date.now() + clickPreventionDelayMs;
     }
 
     // Tap handling is handled via figure onClick to avoid duplicate triggers
@@ -520,8 +517,7 @@ export default function ProductShowcase({
                   data-image-index={index}
                   onClick={(event) => {
                     // Prevent click if a swipe just occurred
-                    const clickPos = clickStartPosRef.current;
-                    if (clickPos?.preventUntil && Date.now() < clickPos.preventUntil) {
+                    if (Date.now() < preventClickUntilRef.current) {
                       event.preventDefault();
                       event.stopPropagation();
                       return;
