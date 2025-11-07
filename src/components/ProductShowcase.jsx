@@ -651,62 +651,59 @@ export default function ProductShowcase({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-4 md:flex-row md:items-center md:gap-6">
-        <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40 md:flex-[0_0_66.666%] md:max-w-[66.666%]">
-          <div className="flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="flex w-full flex-col gap-1 text-center md:w-auto md:text-left">
-              <label
-                htmlFor="size-select"
-                className="text-xs uppercase tracking-widest text-white/60"
+      <div className="flex w-full flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-white shadow-lg shadow-black/40">
+        <div className="flex w-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex w-full flex-col gap-1 text-center md:w-auto md:text-left">
+            <label
+              htmlFor="size-select"
+              className="text-xs uppercase tracking-widest text-white/60"
+            >
+              Größe wählen
+            </label>
+            <div className="relative w-full sm:w-auto sm:min-w-[7.5rem]">
+              <select
+                id="size-select"
+                value={selectedSize}
+                onChange={(event) => onSizeChange?.(event.target.value)}
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-sm font-semibold text-white shadow-inner shadow-black/30 transition focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
               >
-                Größe wählen
-              </label>
-              <div className="relative w-full sm:w-auto sm:min-w-[7.5rem]">
-                <select
-                  id="size-select"
-                  value={selectedSize}
-                  onChange={(event) => onSizeChange?.(event.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-sm font-semibold text-white shadow-inner shadow-black/30 transition focus:border-[rgb(204,31,47)] focus:outline-none focus:ring-2 focus:ring-[rgb(204,31,47)]/40"
-                >
-                  {SIZE_OPTIONS.map((size) => (
-                    <option
-                      key={size}
-                      value={size}
-                      className="bg-gray-900 text-white"
-                    >
-                      {size}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[rgb(204,31,47)]">
-                  ▾
-                </span>
-              </div>
-            </div>
-            <div className="flex w-full flex-col items-center gap-1 text-center md:w-auto md:items-end md:text-right">
-              <span className="text-xs uppercase tracking-widest text-white/60">
-                Preis
+                {SIZE_OPTIONS.map((size) => (
+                  <option
+                    key={size}
+                    value={size}
+                    className="bg-gray-900 text-white"
+                  >
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[rgb(204,31,47)]">
+                ▾
               </span>
-              <div className="flex items-baseline gap-2 md:justify-end">
-                <span className="text-3xl font-semibold text-white">
-                  {PRICE_IN_EURO.toLocaleString("de-DE", {
-                    style: "currency",
-                    currency: "EUR",
-                  })}
-                </span>
-              </div>
             </div>
           </div>
-        </div>
-
-        {typeof onAddToCart === "function" && (
-          <div className="flex w-full md:flex-[0_0_33.333%] md:max-w-[33.333%] md:justify-end">
-            <AddToCartBar
-              onAdd={onAddToCart}
-              className="w-full"
-            />
+          <div className="flex w-full flex-col items-center gap-1 text-center md:w-auto md:items-end md:text-right">
+            <span className="text-xs uppercase tracking-widest text-white/60">
+              Preis
+            </span>
+            <div className="flex items-baseline gap-2 md:justify-end">
+              <span className="text-3xl font-semibold text-white">
+                {PRICE_IN_EURO.toLocaleString("de-DE", {
+                  style: "currency",
+                  currency: "EUR",
+                })}
+              </span>
+            </div>
           </div>
-        )}
+          {typeof onAddToCart === "function" && (
+            <div className="flex w-full justify-center md:w-auto md:justify-end">
+              <AddToCartBar
+                onAdd={onAddToCart}
+                className="sm:w-auto"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <AnimatePresence>
