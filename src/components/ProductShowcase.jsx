@@ -46,6 +46,7 @@ export default function ProductShowcase({
     active: false,
     isHorizontal: null,
   });
+  const clickStartPosRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const total = images.length;
@@ -267,32 +268,56 @@ export default function ProductShowcase({
 
   const handlePointerDown = (event) => {
     if (!shouldHandleSwipeGesture(event.target)) return;
+    
+    // Track the starting position for click detection
+    clickStartPosRef.current = { x: event.clientX, y: event.clientY };
+    
     startSwipe(event.pointerId, event.clientX, event.clientY);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    // Don't use setPointerCapture as it interferes with clicks on child elements
+    // event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
   const handlePointerMove = (event) => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    
     updateSwipePosition(event.pointerId, event.clientX, event.clientY);
+    
+    // Prevent text selection during horizontal swipe
+    if (state.isHorizontal) {
+      event.preventDefault();
+    }
   };
 
   const handlePointerUp = (event) => {
     const result = finishSwipe(event.pointerId, event.clientX, event.clientY);
 
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    // Don't release capture since we're not using it
+    // event.currentTarget.releasePointerCapture?.(event.pointerId);
 
-    void result;
+    // If there was significant movement (swipe), prevent click on figures
+    if (result.exceeded) {
+      // Temporarily mark that a swipe occurred to prevent immediate clicks
+      const now = Date.now();
+      clickStartPosRef.current = { preventUntil: now + 100 };
+    }
 
     // Tap handling is handled via figure onClick to avoid duplicate triggers
   };
 
   const handlePointerCancel = (event) => {
     cancelSwipe(event.pointerId);
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    // Don't release capture since we're not using it
+    // event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
   const handlePointerLeave = (event) => {
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      return; // Don't cancel if we still have capture
+    // Without pointer capture, we should cancel on leave
+    // However, don't cancel if we're still dragging
+    const state = swipeStateRef.current;
+    if (state.active && state.id === event.pointerId) {
+      // Continue tracking - the user might come back
+      return;
     }
     cancelSwipe(event.pointerId);
   };
@@ -435,7 +460,7 @@ export default function ProductShowcase({
     <section className="relative mx-auto flex h-full w-full max-w-5xl flex-col justify-between gap-4">
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-[2.3rem] border border-white/5 bg-gradient-to-br from-gray-800/70 via-gray-900/80 to-gray-950 px-4 py-10 shadow-2xl shadow-black/40 backdrop-blur touch-pan-y"
+        className="relative overflow-hidden rounded-[2.3rem] border border-white/5 bg-gradient-to-br from-gray-800/70 via-gray-900/80 to-gray-950 px-4 py-10 shadow-2xl shadow-black/40 backdrop-blur touch-pan-y select-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -488,12 +513,20 @@ export default function ProductShowcase({
                 <motion.figure
                   key={`${src}-${index}`}
                   className={cn(
-                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 touch-pan-y",
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 touch-pan-y select-none",
 
                     isActive ? "cursor-zoom-in" : "cursor-pointer",
                   )}
                   data-image-index={index}
-                  onClick={() => {
+                  onClick={(event) => {
+                    // Prevent click if a swipe just occurred
+                    const clickPos = clickStartPosRef.current;
+                    if (clickPos?.preventUntil && Date.now() < clickPos.preventUntil) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      return;
+                    }
+                    
                     if (index === current) setIsModalOpen(true);
                     else goTo(index);
                   }}
